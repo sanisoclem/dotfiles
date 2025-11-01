@@ -1,0 +1,13 @@
+*/
+!aerospace/
+!fish/
+!ghostty/
+!kitty/
+!lazygit/
+!nvim/
+!sketchybar/
+!yazi/
+!zellij/
+!starship.toml
+*.bak
+*.bak.*
