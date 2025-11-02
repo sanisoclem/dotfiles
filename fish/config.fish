@@ -3,7 +3,7 @@ if status is-interactive
     source "$HOME/.cargo/env.fish"
 
     fish_add_path ~/.cargo/bin
-    fish_add_path /opt/homebrew/bin
+    fish_add_path /opt/nvim-linux-x86_64/bin
     fish_add_path /usr/local/bin
     fish_add_path ~/.local/bin
 
@@ -15,6 +15,9 @@ if status is-interactive
     alias grep='rg'
 
     set -Ux CARAPACE_BRIDGES 'zsh,fish,bash,inshellisense' # optional
+
+    # workaround for gpg signing issues in WSL: https://stackoverflow.com/a/67821122
+    set -Ux GPG_TTY (tty)
     carapace _carapace | source
     starship init fish | source
     zoxide init fish | source
@@ -39,8 +42,8 @@ function yy
 end
 
 # pnpm
-set -gx PNPM_HOME "/Users/mel/Library/pnpm"
+set -gx PNPM_HOME /Users/mel/Library/pnpm
 if not string match -q -- $PNPM_HOME $PATH
-  set -gx PATH "$PNPM_HOME" $PATH
+    set -gx PATH "$PNPM_HOME" $PATH
 end
 # pnpm end
