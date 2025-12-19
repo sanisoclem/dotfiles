@@ -3,4 +3,6 @@ background-opacity = 0.8
 background-blur-radius = 10
 macos-titlebar-style = hidden
 quick-terminal-animation-duration = 0
+keybind = clear
+macos-option-as-alt = true
 keybind = global:cmd+grave_accent=toggle_quick_terminal
