@@ -32,5 +32,5 @@ media-control stream |
     fi
 
     echo "title: $title, artist: $artist, playing: $playing"
-    sketchybar --trigger media_stream_changed TITLE="$title" artist="$artist" PLAYING="$playing"
+    sketchybar --trigger media_stream_changed TITLE="$title" ARTIST="$artist" PLAYING="$playing"
   done
