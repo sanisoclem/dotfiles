@@ -1,5 +1,9 @@
 PLUGIN_DIR="$HOME/.config/sketchybar/plugins"
 
+killall stats_provider
+$HOME/.config/sketchybar/helpers/stats_provider --cpu usage --disk usage --memory ram_usage \
+  --interval 2 --no-units &
+
 # B A R
 bar=(
   height=40
@@ -11,13 +15,11 @@ bar=(
    color=0x00000000
 )
 
-sketchybar --bar "${bar[@]}"
-
 # D E F A U L T S
 default=(
   padding_left=5
   padding_right=5
-  icon.font="VictorMono Nerd Font:Bold:17.0"
+  icon.font="VictorMono Nerd Font:Bold:14.0"
   label.font="VictorMono Nerd Font:Bold:17.0"
   icon.color=0xffffffff
   label.color=0xffffffff
@@ -30,7 +32,8 @@ default=(
   label.padding_left=5
   label.padding_right=5
 )
-sketchybar --default "${default[@]}"
+
+sketchybar --bar "${bar[@]}" --default "${default[@]}"
 
 # M O D E
 mode=(
@@ -82,12 +85,11 @@ sketchybar --add bracket spaces '/space\..*/'               \
                                 background.height=32
 
 sketchybar --add item chevron left \
-    --set chevron icon= label.drawing=off \
+    --set chevron icon=󰧛 label.drawing=off icon.font="VictorMono Nerd Font:Bold:25.0" padding_left=10 padding_right=3 icon.y_offset=0 \
     --add item front_app left \
     --set front_app icon.drawing=off script="$PLUGIN_DIR/front_app.sh" \
     --subscribe front_app front_app_switched \
-    --add bracket fapp front_app \
-    --set fapp background.color=0x66000000 background.corner_radius=4 background.height=32
+    --set front_app background.color=0x66000000 background.corner_radius=4 background.height=32 padding_right=15 \
 
 # B A T T E R Y  V O L U M E  C L O C K
 sketchybar --add item clock right \
@@ -99,6 +101,34 @@ sketchybar --add item clock right \
     --set battery update_freq=120 script="$PLUGIN_DIR/battery.sh" \
     --subscribe battery system_woke power_source_change
 
+stats_mem=(
+  script="$PLUGIN_DIR/stats_mem.sh"
+  updates=on
+  icon=
+  background.height=12
+  background.color=0x01000000
+)
+sketchybar --add event system_stats
+sketchybar --add graph stats_mem left 40 \
+           --set stats_mem "${stats_mem[@]}" \
+           --subscribe stats_mem system_stats
+
+stats_cpu=(
+  script="$PLUGIN_DIR/stats_cpu.sh"
+  updates=on
+  icon=
+  background.height=12
+  background.color=0x01000000
+)
+sketchybar --add graph stats_cpu left 40 \
+           --set stats_cpu "${stats_cpu[@]}" \
+           --subscribe stats_cpu system_stats
+
+# see: https://github.com/FelixKratz/SketchyBar/issues/639
+sketchybar --add bracket stats '/stats_.*/'               \
+           --set stats background.color=0x66000000 \
+                 background.corner_radius=4  \
+                 background.height=32
 media=(
   script="$PLUGIN_DIR/media.sh"
   updates=on
