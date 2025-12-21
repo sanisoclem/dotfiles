@@ -1,5 +1,8 @@
 ### Linux
 
+<img width="2560" height="1440" alt="image" src="https://github.com/user-attachments/assets/18745652-40f1-4924-b7bb-781008a30a0e" />
+
+
 <img width="2560" height="1440" alt="image" src="https://github.com/user-attachments/assets/f7fffaa9-564d-4482-be85-6edb908be4a0" />
 
 
