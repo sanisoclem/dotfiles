@@ -22,7 +22,7 @@ hyprctl keyword cursor:invisible true &>/dev/null
 
 tty=$(tty 2>/dev/null)
 
-TARGET="2026-01-01 12:00:00"
+TARGET="2027-01-01 12:00:00"
 TARGET_SEC=$(date -d "$TARGET" +%s)
 
 
@@ -33,19 +33,19 @@ while true; do
   if [ "$diff" -le 0 ]; then
     MSG="0:00:00"
   else
-    days=$((diff / 86400))
-    rem=$((diff % 86400))
-    hours=$((rem / 3600))
+    rem=$((diff % 3600))
+    hours=$((diff / 3600))
     rem=$((rem % 3600))
     minutes=$((rem / 60))
     seconds=$((rem % 60))
-    MSG=$(printf "%dD %02d:%02d" "$days" "$hours" "$minutes")
+    MSG=$(printf "%02d:%02d" "$hours" "$minutes")
   fi
 
-  echo $MSG | tte  \
+  echo $MSG | figlet -f poison | tte  \
     --frame-rate 120 --canvas-width 0 --canvas-height 0 --reuse-canvas --anchor-canvas c --anchor-text c\
-    --random-effect --exclude-effects dev_worm \
-    --no-eol --no-restore-cursor &
+    --random-effect \
+    --no-eol --no-restore-cursor \
+    &
 
   while pgrep -t "${tty#/dev/}" -x tte >/dev/null; do
     if read -rsn1 -t 1 || ! screensaver_in_focus; then

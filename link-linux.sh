@@ -18,3 +18,6 @@ for dir in "$SRC_DIR"/*; do
   ln -s "$dir" "$target"
   echo "Linked: $target -> $dir"
 done
+
+
+ln -s $PWD/omarchy/bin/omarchy-cmd-screensaver $HOME/.local/share/omarchy/bin/omarchy-cmd-screensaver
