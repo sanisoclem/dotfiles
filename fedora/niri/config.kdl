@@ -419,6 +419,7 @@ binds {
     Mod+Comma { spawn-sh "noctalia msg settings-toggle"; }
     Alt+Tab { spawn-sh "noctalia msg window-switcher"; }
     Mod+BackSpace hotkey-overlay-title="Session: lock, logout, reboot, shutdown" { spawn-sh "noctalia msg panel-toggle session"; }
+    Mod+Shift+X hotkey-overlay-title="Next wallpaper" { spawn-sh "noctalia msg wallpaper-next"; }
 
     // Audio & Brightness
     XF86AudioRaiseVolume { spawn-sh "noctalia msg volume-up"; }
@@ -633,3 +634,5 @@ debug {
   // Allows notification actions and window activation from Noctalia.
   honor-xdg-activation-with-invalid-serial
 }
+
+include "noctalia.kdl"

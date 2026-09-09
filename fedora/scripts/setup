@@ -206,6 +206,65 @@ link "$REPO_ROOT/ssh_config" "$HOME/.ssh/config"
 step "gitconfig"
 link "$REPO_ROOT/.gitconfig" "$HOME/.gitconfig"
 
+# ── immich api key ────────────────────────────────────────────────────────────
+# Prompted for, never taken as an argument — an argument lands in shell history.
+# It goes in ~/.local/state and never in the repo: ~/.config is a symlink to
+# fedora/, so a key dropped there is one `git add` from being published.
+
+step "immich api key"
+IMMICH_STATE="$HOME/.local/state/immich-wallpaper"
+
+if [[ -f "$IMMICH_STATE/api-key" ]]; then
+  info "already set at $IMMICH_STATE/api-key"
+else
+  read -rsp "  immich api key (Account Settings -> API Keys, blank to skip): " key
+  echo
+
+  if [[ -n "$key" ]]; then
+    mkdir -p "$IMMICH_STATE"
+    printf '%s' "$key" >"$IMMICH_STATE/api-key"
+    chmod 600 "$IMMICH_STATE/api-key"
+    info "wrote $IMMICH_STATE/api-key"
+  else
+    warn "skipped — immich-wallpaper will not run until this exists"
+  fi
+  unset key
+fi
+
+# ── noctalia settings ─────────────────────────────────────────────────────────
+# noctalia keeps its settings in $XDG_STATE_HOME, outside this repo, so the bar
+# layout, the enabled plugins and the local plugin source don't come along with a
+# clone. fedora/noctalia/settings.toml is a snapshot of them — refresh it with
+# scripts/noctalia-save after changing the bar, and commit it.
+
+step "noctalia settings"
+NOCTALIA_SETTINGS="$HOME/.local/state/noctalia/settings.toml"
+NOCTALIA_SNAPSHOT="$FEDORA/noctalia/settings.toml"
+
+if [[ ! -f "$NOCTALIA_SNAPSHOT" ]]; then
+  warn "no snapshot at $NOCTALIA_SNAPSHOT — run scripts/noctalia-save on a configured machine"
+elif [[ -f "$NOCTALIA_SETTINGS" ]]; then
+  info "settings already exist — not overwriting them"
+  info "run scripts/noctalia-save to snapshot this machine's bar into the repo"
+else
+  mkdir -p "$(dirname "$NOCTALIA_SETTINGS")"
+  cp "$NOCTALIA_SNAPSHOT" "$NOCTALIA_SETTINGS"
+  # The local plugin source is an absolute path — repoint it at this clone.
+  sed -i "s|^\( *\)location = \".*/noctalia-plugins\"|\1location = \"$FEDORA/noctalia-plugins\"|" \
+    "$NOCTALIA_SETTINGS"
+  info "restored bar layout + plugins from the repo snapshot"
+  noctalia config validate >/dev/null 2>&1 ||
+    warn "noctalia says the restored config is invalid — check $NOCTALIA_SETTINGS"
+fi
+
+# ── timers ────────────────────────────────────────────────────────────────────
+# The unit files are in the repo, but systemd's enablement symlink is not.
+
+step "systemd timers"
+systemctl --user daemon-reload
+systemctl --user enable --now immich-wallpaper.timer
+info "next run: $(systemctl --user list-timers immich-wallpaper.timer --no-pager | awk 'NR==2 {print $1, $2, $3}')"
+
 step "status"
 for t in fish starship zoxide fzf carapace eza bat fd rg fastfetch \
   lazygit lazydocker zellij yazi spf nvim gh niri noctalia ghostty; do

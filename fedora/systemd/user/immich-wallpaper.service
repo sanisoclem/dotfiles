@@ -1,0 +1,6 @@
+[Unit]
+Description=Refresh the wallpaper pool from Immich
+
+[Service]
+Type=oneshot
+ExecStart=%h/.config/scripts/immich-wallpaper

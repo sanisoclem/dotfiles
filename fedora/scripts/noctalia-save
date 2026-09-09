@@ -1,0 +1,46 @@
+#!/usr/bin/env bash
+#
+# noctalia-save — snapshot noctalia's settings into this repo.
+#
+# noctalia keeps its settings in $XDG_STATE_HOME (~/.local/state/noctalia),
+# outside the repo, and rewrites the file whenever anything changes — including
+# the current wallpaper path, three times per change. Symlinking it into the
+# repo would work but would leave the tree dirty every single day.
+#
+# So instead: snapshot on demand. The volatile wallpaper paths are stripped, so
+# the tracked copy only changes when you actually change a setting.
+#
+# Run this after changing the bar layout, then commit fedora/noctalia/settings.toml.
+# setup restores it on a fresh machine.
+#
+set -euo pipefail
+
+REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
+LIVE="$HOME/.local/state/noctalia/settings.toml"
+SNAPSHOT="$REPO_ROOT/fedora/noctalia/settings.toml"
+
+[[ -f "$LIVE" ]] || {
+  echo "no settings at $LIVE" >&2
+  exit 1
+}
+
+mkdir -p "$(dirname "$SNAPSHOT")"
+
+# Drop the sections noctalia rewrites on every wallpaper change, and the
+# per-monitor block, which is named after this machine's outputs.
+awk '
+  /^\[wallpaper\.(default|last|monitors)/ { skip = 1; next }
+  /^\[/                                   { skip = 0 }
+  !skip                                   { print }
+' "$LIVE" >"$SNAPSHOT"
+
+# Trailing blank lines pile up as sections get stripped.
+printf '%s\n' "$(cat "$SNAPSHOT")" >"$SNAPSHOT"
+
+echo "saved $LIVE"
+echo "  -> $SNAPSHOT"
+if command -v git >/dev/null && git -C "$REPO_ROOT" diff --quiet -- "$SNAPSHOT" 2>/dev/null; then
+  echo "  (no change)"
+else
+  echo "  changed — commit it"
+fi

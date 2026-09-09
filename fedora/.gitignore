@@ -12,3 +12,10 @@
 !nvim/**
 !lazygit
 !lazygit/**
+!systemd
+!systemd/**
+!noctalia-plugins
+!noctalia-plugins/**
+!noctalia
+!noctalia/settings.toml
+systemd/user/*.wants/
