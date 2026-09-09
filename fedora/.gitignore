@@ -1,0 +1,12 @@
+*
+!.gitignore
+!fish
+!fish/**
+!ghostty
+!ghostty/**
+!scripts
+!scripts/**
+!niri
+!niri/**
+!nvim
+!nvim/**
