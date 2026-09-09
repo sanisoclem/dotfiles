@@ -418,6 +418,7 @@ binds {
     Mod+S { spawn-sh "noctalia msg panel-toggle control-center"; }
     Mod+Comma { spawn-sh "noctalia msg settings-toggle"; }
     Alt+Tab { spawn-sh "noctalia msg window-switcher"; }
+    Mod+BackSpace hotkey-overlay-title="Session: lock, logout, reboot, shutdown" { spawn-sh "noctalia msg panel-toggle session"; }
 
     // Audio & Brightness
     XF86AudioRaiseVolume { spawn-sh "noctalia msg volume-up"; }

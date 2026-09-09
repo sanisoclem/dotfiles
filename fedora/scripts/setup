@@ -37,7 +37,7 @@ link() {
 step "enabling copr repos"
 sudo dnf install -y dnf-plugins-core
 for c in \
-  atim/lazygit \
+  boobaa/lazygit \
   atim/lazydocker \
   varlad/zellij \
   varlad/yazi \
