@@ -1,0 +1,151 @@
+#!/usr/bin/env bash
+#
+# immich-wallpaper — refresh the wallpaper pool from immich.
+#
+# Pulls 5 cats and 5 landscapes via immich's smart (CLIP) search, replaces the
+# previous pool with them, and sets one at random. Run daily by
+# immich-wallpaper.timer.
+#
+# Setup, once:
+#   immich -> Account Settings -> API Keys -> New API Key
+#   mkdir -p ~/.local/state/immich-wallpaper
+#   printf '%s' 'YOUR_KEY' > ~/.local/state/immich-wallpaper/api-key
+#   chmod 600 ~/.local/state/immich-wallpaper/api-key
+#
+# The key lives in ~/.local/state deliberately: ~/.config is a symlink to this
+# git repo, so anything dropped there is one `git add` away from being published.
+#
+set -euo pipefail
+
+IMMICH_URL="${IMMICH_URL:-https://photos.131broadway.place}"
+STATE="$HOME/.local/state/immich-wallpaper"
+DEST_DIR="${WALLPAPER_DIR:-$HOME/Pictures/wallpapers}"
+
+# What the pool is made of: <count> <smart-search query>
+WANTED=(
+  "5 cat"
+  "5 landscape"
+)
+
+POOL_SIZE=60 # fetched per query, then shuffled — keeps day-to-day variety
+MIN_WIDTH=1920
+
+die() {
+  printf '\033[1;31mfatal:\033[0m %s\n' "$*" >&2
+  exit 1
+}
+
+[[ -f "$STATE/api-key" ]] || die "no api key at $STATE/api-key — see the header of this script"
+
+# A key copied out of a coloured terminal can carry ANSI escape sequences. ESC is
+# illegal in an HTTP header value, so every request then fails with a bare 400 and
+# an empty body — which looks like a server or permissions problem and is neither.
+# Strip whole CSI sequences first, then any control bytes left over.
+KEY="$(sed -e $'s/\x1b\\[[0-9;]*[A-Za-z]//g' -e 's/[[:cntrl:]]//g' "$STATE/api-key")"
+KEY="${KEY// /}"
+
+[[ -n "$KEY" ]] || die "$STATE/api-key is empty once cleaned of control characters"
+[[ "$KEY" =~ ^[[:print:]]+$ ]] || die "$STATE/api-key still holds characters illegal in an HTTP header"
+
+api() { # api <method> <path> [json body]
+  local method="$1" path="$2" body="${3:-}"
+  curl -sS --fail-with-body -m 60 --retry 3 --retry-delay 5 --retry-connrefused -X "$method" \
+    -H "x-api-key: $KEY" \
+    -H 'Content-Type: application/json' \
+    ${body:+-d "$body"} \
+    "$IMMICH_URL/api$path"
+}
+
+# Emit <count> random landscape assets matching a CLIP query, as id/name/mime TSV.
+pick() {
+  local query="$1" count="$2" req
+  req=$(jq -nc --arg q "$query" --argjson size "$POOL_SIZE" \
+    '{query: $q, size: $size, type: "IMAGE", withExif: true, visibility: "timeline"}')
+
+  api POST /search/smart "$req" | jq -r --argjson min "$MIN_WIDTH" '
+    [ .assets.items[]
+      | select(.exifInfo.exifImageWidth >= (.exifInfo.exifImageHeight // 0)) ] as $landscape
+    # prefer big enough to not look soft on a 1440p panel, but take what we can get
+    | ( [ $landscape[] | select(.exifInfo.exifImageWidth >= $min) ]
+        | if length > 0 then . else $landscape end )
+    | .[] | [.id, .originalFileName, (.originalMimeType // "")] | @tsv
+  ' | shuf -n "$count"
+}
+
+mkdir -p "$DEST_DIR"
+
+# ── fetch the new pool ────────────────────────────────────────────────────────
+
+declare -a keep=()
+
+for spec in "${WANTED[@]}"; do
+  count="${spec%% *}"
+  query="${spec#* }"
+
+  found=0
+  while IFS=$'\t' read -r id name mime; do
+    [[ -n "$id" ]] || continue
+    found=$((found + 1))
+
+    ext="${name##*.}"
+    dest="$DEST_DIR/immich-$id.${ext,,}"
+
+    if [[ -f "$dest" ]]; then
+      echo "have    $query: $name"
+    else
+      echo "fetch   $query: $name"
+      tmp="$(mktemp "$DEST_DIR/.immich-XXXXXX")"
+      if ! curl -sS --fail-with-body -m 120 --retry 3 --retry-delay 5 --retry-connrefused -H "x-api-key: $KEY" \
+        "$IMMICH_URL/api/assets/$id/original" -o "$tmp"; then
+        rm -f "$tmp"
+        echo "  ! download failed, skipping" >&2
+        continue
+      fi
+
+      # swaybg only handles common formats — convert anything exotic (HEIC off a
+      # phone, RAW off a camera) rather than silently setting an unreadable file.
+      case "$mime" in
+      image/jpeg | image/png | image/webp)
+        mv "$tmp" "$dest"
+        ;;
+      *)
+        echo "  converting $mime -> jpeg"
+        dest="$DEST_DIR/immich-$id.jpg"
+        magick "$tmp" -quality 95 "$dest" || {
+          rm -f "$tmp"
+          continue
+        }
+        rm -f "$tmp"
+        ;;
+      esac
+    fi
+
+    keep+=("$dest")
+  done < <(pick "$query" "$count")
+
+  ((found > 0)) || echo "  ! no results for '$query'" >&2
+done
+
+((${#keep[@]} > 0)) || die "nothing downloaded — leaving the current pool alone"
+
+# ── drop everything that isn't in the new pool ────────────────────────────────
+
+removed=0
+while IFS= read -r -d '' old; do
+  for k in "${keep[@]}"; do
+    [[ "$old" == "$k" ]] && continue 2
+  done
+  rm -f "$old"
+  removed=$((removed + 1))
+done < <(find "$DEST_DIR" -maxdepth 1 -name 'immich-*' -type f -print0)
+
+# ── set one ───────────────────────────────────────────────────────────────────
+
+pick_one="$(printf '%s\n' "${keep[@]}" | shuf -n 1)"
+noctalia msg wallpaper-set "$pick_one"
+
+echo "pool: ${#keep[@]} wallpapers, $removed removed"
+echo "set:  $pick_one"
+
+# The bar widget fires this and gets nothing back, so report completion here.
+noctalia msg notification-show "Wallpapers" "${#keep[@]} fresh from Immich" >/dev/null 2>&1 || true

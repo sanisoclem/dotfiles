@@ -1,0 +1,6 @@
+[Unit]
+Description=Copy the current noctalia wallpaper to the SDDM login screen
+
+[Service]
+Type=oneshot
+ExecStart=%h/.config/scripts/sddm-noctalia-sync

@@ -1,0 +1,161 @@
+#!/usr/bin/env bash
+#
+# sddm-noctalia — install the noctalia login theme and keep it on today's wallpaper.
+#
+#   ./sddm-noctalia --preview   see it in a window, without touching the login screen
+#   ./sddm-noctalia             install it and make it the greeter
+#   ./sddm-noctalia --status    show what's configured
+#   ./sddm-noctalia --undo      put SDDM back to its unthemed default
+#
+# Always --preview first. A theme that fails to load takes the login screen with
+# it, and the only way back is a TTY.
+
+set -euo pipefail
+
+THEME="noctalia"
+HERE="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+THEME_SRC="$HERE/../sddm-theme"
+THEME_DST="/usr/share/sddm/themes/$THEME"
+SYNC="$HERE/../scripts/sddm-noctalia-sync"
+DROP="/var/lib/sddm-noctalia"
+SDDM_CONF="/etc/sddm.conf.d/10-noctalia.conf"
+
+step() { printf '\n\033[1;34m==>\033[0m %s\n' "$*"; }
+info() { printf '  %s\n' "$*"; }
+warn() { printf '\033[1;33m  ! \033[0m%s\n' "$*"; }
+die() {
+  printf '\033[1;31mfatal:\033[0m %s\n' "$*" >&2
+  exit 1
+}
+
+check_imports() {
+  local dir="$1" bad
+  bad="$(grep -rhoE '^import (org\.kde\.[A-Za-z.]+|QtGraphicalEffects|QtQuick\.VirtualKeyboard|Qt5Compat\.[A-Za-z.]+)' \
+    "$dir"/*.qml 2>/dev/null | sort -u || true)"
+  if [[ -n "$bad" ]]; then
+    warn "$dir imports modules that are not installed here:"
+    printf '    %s\n' $bad
+    die "this would black-screen the greeter"
+  fi
+  info "imports are all available on this machine"
+}
+
+do_preview() {
+  [[ -d "$THEME_SRC" ]] || die "no theme source at $THEME_SRC"
+  check_imports "$THEME_SRC"
+
+  [[ -f "$DROP/wallpaper.jpg" ]] ||
+    warn "no wallpaper at $DROP/wallpaper.jpg yet — the preview will show the flat background"
+
+  local greeter=/usr/bin/sddm-greeter
+  [[ -x "$greeter" ]] || greeter=/usr/bin/sddm-greeter-qt6
+  [[ -x "$greeter" ]] || die "no sddm greeter binary found"
+
+  step "preview with $(basename "$greeter") (close the window when done)"
+  "$greeter" --test-mode --theme "$THEME_SRC"
+}
+
+do_status() {
+  step "status"
+  if [[ -f "$SDDM_CONF" ]]; then
+    info "$SDDM_CONF:"
+    sed 's/^/    /' "$SDDM_CONF"
+  else
+    warn "$SDDM_CONF absent — SDDM is using its unthemed default"
+  fi
+
+  info "themes installed: $(ls /usr/share/sddm/themes 2>/dev/null | tr '\n' ' ')"
+
+  if [[ -d "$DROP" ]]; then
+    info "$DROP: $(stat -c '%U:%G %a' "$DROP")"
+    info "  wallpaper:  $([[ -f $DROP/wallpaper.jpg ]] && stat -c '%s bytes' "$DROP/wallpaper.jpg" || echo 'not synced')"
+    info "  colors.json: $([[ -f $DROP/colors.json ]] && cat "$DROP/colors.json" | tr -d '\n ' || echo 'not synced')"
+  else
+    warn "$DROP absent — nothing synced"
+  fi
+
+  systemctl --user is-enabled sddm-noctalia-sync.path >/dev/null 2>&1 &&
+    info "wallpaper watcher: enabled" ||
+    warn "wallpaper watcher: not enabled"
+}
+
+do_undo() {
+  step "reverting"
+  if [[ -f "$SDDM_CONF" ]]; then
+    sudo rm -f "$SDDM_CONF"
+    info "removed $SDDM_CONF — SDDM is back to its default theme"
+  else
+    info "$SDDM_CONF was not there"
+  fi
+
+  systemctl --user disable --now sddm-noctalia-sync.path 2>/dev/null || true
+  info "wallpaper watcher stopped"
+  info "left in place: $THEME_DST and $DROP — harmless once nothing selects them"
+}
+
+do_install() {
+  [[ -d "$THEME_SRC" ]] || die "no theme source at $THEME_SRC"
+
+  step "checking the theme can render"
+  check_imports "$THEME_SRC"
+
+  step "drop directory"
+  if [[ -d "$DROP" ]]; then
+    info "$DROP exists ($(stat -c '%U:%G %a' "$DROP"))"
+  else
+    sudo install -d -o "$USER" -g "$(id -gn)" -m 0755 "$DROP"
+    info "created $DROP owned by $USER"
+  fi
+
+  step "installing the theme"
+  sudo install -d -m 0755 "$THEME_DST"
+  for f in Main.qml metadata.desktop theme.conf; do
+    [[ -f "$THEME_SRC/$f" ]] || die "$THEME_SRC/$f is missing"
+    sudo install -m 0644 -o root -g root "$THEME_SRC/$f" "$THEME_DST/$f"
+  done
+  info "$THEME_SRC -> $THEME_DST (root-owned)"
+
+  step "syncing wallpaper and palette"
+  "$SYNC"
+
+  step "selecting the theme"
+  local tmp
+  tmp="$(mktemp)"
+  chmod 0644 "$tmp"
+  cat >"$tmp" <<CONF
+[Theme]
+Current=$THEME
+CursorTheme=capitaine-cursors
+CursorSize=24
+CONF
+
+  sudo install -d -m 0755 /etc/sddm.conf.d
+  sudo install -m 0644 -o root -g root "$tmp" "$SDDM_CONF"
+  rm -f "$tmp"
+  sed 's/^/    /' "$SDDM_CONF"
+
+  step "watching for wallpaper changes"
+  systemctl --user daemon-reload
+  systemctl --user enable --now sddm-noctalia-sync.path
+  info "sddm-noctalia-sync.path enabled"
+
+  cat <<NOTE
+
+  Log out to see it. Wallpaper and palette follow noctalia from now on.
+
+  After editing cachyos/sddm-theme/Main.qml:
+      ./sddm-noctalia --preview
+      ./sddm-noctalia
+
+  To undo:  ./sddm-noctalia --undo
+NOTE
+}
+
+case "${1:-}" in
+'' | --install) do_install ;;
+--preview) do_preview ;;
+--status) do_status ;;
+--undo) do_undo ;;
+-h | --help) sed -n '2,12p' "$0" | sed 's/^# \{0,1\}//' ;;
+*) die "unknown option: $1 (try --help)" ;;
+esac

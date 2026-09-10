@@ -1,0 +1,37 @@
+#!/usr/bin/env bash
+#
+# niri-scratch — toggle a "scratch" workspace, the way Hyprland's special
+# workspace works.
+#
+# niri has no special/hidden workspace. What it has is named workspaces plus
+# focus-workspace-previous, and no toggle action joining them — so this is the
+# toggle: jump to "scratch" from anywhere, and jump back to wherever you came
+# from when you're already sitting on it.
+#
+# The workspace is declared in niri/cfg/misc.kdl so it always exists, even empty.
+# One visible difference from Hyprland: a declared workspace shows up in the
+# workspace list and the overview rather than being hidden until summoned.
+
+set -euo pipefail
+
+WS="scratch"
+
+have() { command -v "$1" >/dev/null 2>&1; }
+have niri || {
+  echo "niri is not on PATH" >&2
+  exit 1
+}
+have jq || {
+  echo "jq is required" >&2
+  exit 1
+}
+
+# .name is null on unnamed workspaces, so default it rather than printing "null".
+focused="$(niri msg --json workspaces |
+  jq -r 'first(.[] | select(.is_focused) | .name // "") // ""')"
+
+if [[ "$focused" == "$WS" ]]; then
+  niri msg action focus-workspace-previous
+else
+  niri msg action focus-workspace "$WS"
+fi

@@ -1,0 +1,13 @@
+id          = "mel/wallpaper-refresh"
+name        = "Wallpaper Refresh"
+version     = "1.0.0"
+plugin_api  = 22
+author      = "mel"
+license     = "MIT"
+icon        = "image"
+description = "Click to pull a fresh pool of wallpapers from Immich."
+tags        = ["bar", "wallpaper"]
+
+[[widget]]
+id    = "widget"
+entry = "src/widget.luau"

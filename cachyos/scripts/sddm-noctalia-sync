@@ -1,0 +1,111 @@
+#!/usr/bin/env bash
+#
+# sddm-noctalia-sync — show the current noctalia wallpaper on the login screen.
+# Run by sddm-noctalia-sync.path, and once by scripts-manual/sddm-noctalia.
+
+set -euo pipefail
+
+DROP="/var/lib/sddm-noctalia"
+DEST="$DROP/wallpaper.jpg"
+NOCTALIA_SETTINGS="$HOME/.local/state/noctalia/settings.toml"
+NOCTALIA_NIRI="$HOME/.config/niri/noctalia.kdl"
+NOCTALIA_GHOSTTY="$HOME/.config/ghostty/themes/noctalia"
+
+info() { printf '  %s\n' "$*"; }
+die() {
+  printf '\033[1;31mfatal:\033[0m %s\n' "$*" >&2
+  exit 1
+}
+
+[[ -d "$DROP" ]] || die "$DROP does not exist — run scripts-manual/sddm-noctalia first"
+[[ -w "$DROP" ]] || die "$DROP is not writable by $USER — run scripts-manual/sddm-noctalia first"
+[[ -f "$NOCTALIA_SETTINGS" ]] || die "no noctalia settings at $NOCTALIA_SETTINGS"
+
+wallpaper="$(python3 - "$NOCTALIA_SETTINGS" <<'PY'
+import sys, tomllib
+
+with open(sys.argv[1], "rb") as fh:
+    cfg = tomllib.load(fh)
+
+wp = cfg.get("wallpaper", {})
+for key in ("monitors", "last", "default"):
+    node = wp.get(key)
+    if isinstance(node, dict):
+        if path := node.get("path"):
+            print(path)
+            break
+        for mon in node.values():
+            if isinstance(mon, dict) and (path := mon.get("path")):
+                print(path)
+                break
+        else:
+            continue
+        break
+PY
+)"
+
+[[ -n "$wallpaper" ]] || die "could not find a wallpaper path in $NOCTALIA_SETTINGS"
+[[ -f "$wallpaper" ]] || die "noctalia points at $wallpaper, which does not exist"
+
+kdl_color() {
+  [[ -f "$NOCTALIA_NIRI" ]] || return 0
+  sed -n "s/.*$1  *\"\(#[0-9a-fA-F]\{6\}\)\".*/\1/p" "$NOCTALIA_NIRI" | head -1
+}
+ghostty_color() {
+  [[ -f "$NOCTALIA_GHOSTTY" ]] || return 0
+  sed -n "s/^$1 = \(#[0-9a-fA-F]\{6\}\)$/\1/p" "$NOCTALIA_GHOSTTY" | head -1
+}
+
+accent="$(kdl_color 'active-color')"
+error="$(kdl_color 'urgent-color')"
+background="$(ghostty_color 'background')"
+foreground="$(ghostty_color 'foreground')"
+surface="$(ghostty_color 'selection-background')"
+muted="$(sed -n 's/^palette = 8=\(#[0-9a-fA-F]\{6\}\)$/\1/p' "$NOCTALIA_GHOSTTY" 2>/dev/null | head -1)"
+
+colors_tmp="$(mktemp "$DROP/.colors-XXXXXX")"
+{
+  printf '{\n'
+  first=1
+  for pair in "background:$background" "surface:$surface" "foreground:$foreground" \
+    "muted:$muted" "accent:$accent" "error:$error"; do
+    key="${pair%%:*}" val="${pair#*:}"
+    [[ -n "$val" ]] || continue
+    ((first)) || printf ',\n'
+    printf '  "%s": "%s"' "$key" "$val"
+    first=0
+  done
+  printf '\n}\n'
+} >"$colors_tmp"
+
+if [[ -f "$DROP/colors.json" ]] && cmp -s "$colors_tmp" "$DROP/colors.json"; then
+  rm -f "$colors_tmp"
+else
+  install -m 0644 "$colors_tmp" "$DROP/colors.json"
+  rm -f "$colors_tmp"
+  info "palette -> $DROP/colors.json (accent ${accent:-default})"
+fi
+
+ext="${wallpaper##*.}"
+tmp="$(mktemp "$DROP/.wallpaper-XXXXXX")"
+trap 'rm -f "$tmp"' EXIT
+
+case "${ext,,}" in
+jpg | jpeg)
+  cp "$wallpaper" "$tmp"
+  ;;
+*)
+  command -v magick >/dev/null 2>&1 ||
+    die "$wallpaper is a .$ext and ImageMagick is not installed to convert it"
+  magick "$wallpaper" -quality 92 "jpeg:$tmp" || die "could not convert $wallpaper"
+  info "converted .$ext -> jpeg"
+  ;;
+esac
+
+if [[ -f "$DEST" ]] && cmp -s "$tmp" "$DEST"; then
+  info "wallpaper unchanged: $(basename "$wallpaper")"
+  exit 0
+fi
+
+install -m 0644 "$tmp" "$DEST"
+info "wallpaper -> $DEST ($(basename "$wallpaper"))"

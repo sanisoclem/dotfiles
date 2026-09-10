@@ -1,0 +1,55 @@
+// ────────────── Layout ──────────────
+// https://yalter.github.io/niri/Configuration:-Layout
+
+layout {
+    // Required: noctalia paints the wallpaper in the backdrop behind niri.
+    background-color "transparent"
+
+    gaps 9
+
+    center-focused-column "never"
+    always-center-single-column
+
+    // Mod+R cycles through these.
+    preset-column-widths {
+        proportion 0.33333
+        proportion 0.5
+        proportion 0.66667
+    }
+
+    default-column-width { proportion 0.5; }
+
+    // These colours are placeholders — noctalia.kdl, included last, overrides
+    // border/focus-ring/tab-indicator with the current theme's palette. Width is
+    // not something noctalia sets, so it stays ours: includes merge per-field
+    // rather than replacing the whole block.
+    //
+    border {
+        width 2
+        active-color "#cba6f7"
+        inactive-color "#45475a"
+        urgent-color "#f5c2e7"
+    }
+
+    // Both the ring and the border are on. The border is always drawn, so it
+    // gives every window an edge; the ring is drawn only around the focused one.
+    // Stock CachyOS relied on the ring alone and it demonstrably rendered here,
+    // which the border currently is not — so this restores the mechanism that
+    // is known to work on this machine rather than betting on the border again.
+    // noctalia colours both.
+    focus-ring {
+        width 2
+        active-color   "#808080"
+        inactive-color "#505050"
+    }
+
+    shadow {
+        softness 30
+        spread 5
+        offset x=0 y=5
+        color "#0007"
+    }
+
+    struts {
+    }
+}

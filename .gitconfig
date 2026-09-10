@@ -31,6 +31,6 @@
 [user]
 	email = dev@jerahmeelcosinas.net
 	name = Jerahmeel Cosinas
-	; signingkey = F5A3386CB2A80124
+	signingkey = F5A3386CB2A80124
 [commit]
-	; gpgsign = true
+	gpgsign = true

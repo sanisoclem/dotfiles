@@ -1,0 +1,61 @@
+// ────────────── Everything else ──────────────
+
+prefer-no-csd
+
+screenshot-path "~/Pictures/Screenshots/Screenshot from %Y-%m-%d %H-%M-%S.png"
+
+environment {
+    XDG_CURRENT_DESKTOP "niri"
+    XDG_SESSION_TYPE "wayland"
+    GTK_USE_PORTAL "1"
+    MOZ_ENABLE_WAYLAND "1"
+    QT_QPA_PLATFORM "wayland"
+    QT_QPA_PLATFORMTHEME "qt6ct"
+    QT_QPA_PLATFORMTHEME_QT6 "qt6"
+    QT_WAYLAND_DISABLE_WINDOWDECORATION "1"
+    ELECTRON_OZONE_PLATFORM_HINT "wayland"
+    TERMINAL "ghostty"
+}
+
+cursor {
+    xcursor-theme "capitaine-cursors"
+    xcursor-size 24
+}
+
+// From the CachyOS defaults. This is what frosts the noctalia bar and panels —
+// it only takes effect where a window-rule or layer-rule asks for it, see
+// rules.kdl.
+blur {
+    passes 2        // more passes = stronger blur (default: 3)
+    offset 3.0      // sample distance per pass (default: 3.0)
+    noise 0.03      // grain overlay (default: 0.02)
+    saturation 1.0  // color saturation boost (default: 1.5)
+}
+
+hotkey-overlay {
+    skip-at-startup
+}
+
+// Declared so it always exists, even when empty — scripts/niri-scratch toggles
+// it. Unlike Hyprland's special workspace this one is a normal workspace, so it
+// does appear in the workspace list and the overview.
+workspace "scratch"
+
+// niri opens the overview when the pointer hits the top-left corner. Mod+X is
+// the deliberate way in; the corner just fires by accident.
+gestures {
+    hot-corners {
+        off
+    }
+}
+
+overview {
+    workspace-shadow {
+        off
+    }
+}
+
+debug {
+    // Lets noctalia's notification actions and window activation work.
+    honor-xdg-activation-with-invalid-serial
+}

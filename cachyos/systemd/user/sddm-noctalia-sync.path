@@ -1,0 +1,11 @@
+[Unit]
+Description=Watch noctalia for wallpaper changes
+
+[Path]
+# noctalia rewrites this file whenever the wallpaper changes, whatever caused it:
+# the immich timer, noctalia's own rotation, or Mod+Shift+X. The sync it triggers
+# no-ops when the image is unchanged, so the frequent rewrites are harmless.
+PathChanged=%h/.local/state/noctalia/settings.toml
+
+[Install]
+WantedBy=default.target

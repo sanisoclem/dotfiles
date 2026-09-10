@@ -1,0 +1,11 @@
+[SddmGreeterTheme]
+Name=noctalia
+Description=Minimal Qt6 greeter that tracks the noctalia wallpaper and palette
+Author=mel
+License=MIT
+Type=sddm-theme
+Version=1.0
+MainScript=Main.qml
+ConfigFile=theme.conf
+Theme-Id=noctalia
+Theme-API=2.0

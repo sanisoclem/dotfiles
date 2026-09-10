@@ -1,0 +1,274 @@
+#!/usr/bin/env bash
+#
+# yubikey-sudo — touch the YubiKey instead of typing a password for sudo.
+#
+#   ./yubikey-sudo            register this key and turn it on
+#   ./yubikey-sudo --add      register another key (a backup — do this!)
+#   ./yubikey-sudo --status   show what's currently configured
+#   ./yubikey-sudo --undo     take it back out of the sudo PAM stack
+#
+# ── READ THIS BEFORE RUNNING ─────────────────────────────────────────────────
+#
+# This edits /etc/pam.d/sudo. A bad PAM stack means no sudo, and fixing it
+# needs... sudo. So open a spare root shell first and leave it open until you
+# have tested that sudo still works:
+#
+#     sudo -i        # in another terminal, keep it open
+#
+# The escape hatch, from that root shell:
+#
+#     /path/to/yubikey-sudo --undo
+#     # or by hand:  cp /etc/pam.d/sudo.bak.<newest> /etc/pam.d/sudo
+#
+# Two deliberate choices keep the blast radius small:
+#
+#   * The module is `sufficient`, not `required`. A touch gets you in; anything
+#     else (no key plugged in, no touch, unregistered key) falls through to the
+#     normal password prompt. Losing the key costs you nothing but convenience.
+#     `required` would mean password AND touch — real 2FA, but lose the key and
+#     you lose sudo. If you want that, see the note at the bottom of this file.
+#
+#   * `nouserok` is NOT set, and must never be set here. It makes pam_u2f
+#     succeed for users with no registered credential — combined with
+#     `sufficient` that is passwordless sudo for everyone. It looks like a
+#     harmless "don't break other users" flag. It is not.
+#
+# The mapping file lives at /etc/u2f_mappings, not the pam_u2f default of
+# ~/.config/Yubico/u2f_keys, because scripts/setup makes ~/.config a symlink
+# into this git repo. An auth file inside a repo is one `git add -f` from being
+# published and one `git checkout` from changing under you.
+
+set -euo pipefail
+
+PAM_FILE="/etc/pam.d/sudo"
+MAPPINGS="/etc/u2f_mappings"
+BEGIN_MARKER="# >>> yubikey-sudo >>>"
+END_MARKER="# <<< yubikey-sudo <<<"
+
+step() { printf '\n\033[1;34m==>\033[0m %s\n' "$*"; }
+info() { printf '  %s\n' "$*"; }
+warn() { printf '\033[1;33m  ! \033[0m%s\n' "$*"; }
+die() {
+  printf '\033[1;31mfatal:\033[0m %s\n' "$*" >&2
+  exit 1
+}
+have() { command -v "$1" >/dev/null 2>&1; }
+
+pam_line_present() { grep -qF "$BEGIN_MARKER" "$PAM_FILE"; }
+
+# The relying party ID is baked into the credential at registration time, so the
+# PAM line has to ask for the exact same string or the key won't validate.
+# pam_u2f defaults it to pam://$HOSTNAME on both sides, which quietly breaks the
+# day the machine is renamed — so pin it explicitly and reuse whatever the
+# existing line already committed to.
+current_origin() {
+  if pam_line_present && grep -q 'origin=' "$PAM_FILE"; then
+    sed -n "/$BEGIN_MARKER/,/$END_MARKER/s/.*origin=\([^ ]*\).*/\1/p" "$PAM_FILE" | head -1
+  else
+    printf 'pam://%s' "$(hostname)"
+  fi
+}
+
+# ── subcommands ───────────────────────────────────────────────────────────────
+
+do_status() {
+  step "status"
+
+  if have pamu2fcfg; then info "pam-u2f installed"; else warn "pam-u2f not installed"; fi
+
+  if [[ -f /usr/lib/security/pam_u2f.so ]]; then
+    info "pam_u2f.so present"
+  else
+    warn "pam_u2f.so missing from /usr/lib/security"
+  fi
+
+  if have fido2-token; then
+    local n
+    n="$(fido2-token -L 2>/dev/null | wc -l)"
+    if ((n > 0)); then
+      info "$n FIDO authenticator(s) plugged in:"
+      fido2-token -L 2>/dev/null | sed 's/^/    /'
+    else
+      warn "no FIDO authenticator detected — plug the YubiKey in"
+    fi
+  fi
+
+  if [[ -f "$MAPPINGS" ]]; then
+    local creds
+    creds="$(awk -F: -v u="$USER" '$1 == u {print NF - 1; found = 1} END {if (!found) print 0}' "$MAPPINGS")"
+    info "$MAPPINGS: $creds credential(s) registered for $USER"
+    info "  owner/mode: $(stat -c '%U:%G %a' "$MAPPINGS")"
+  else
+    warn "$MAPPINGS does not exist — nothing registered yet"
+  fi
+
+  if pam_line_present; then
+    info "$PAM_FILE: enabled"
+    sed -n "/$BEGIN_MARKER/,/$END_MARKER/p" "$PAM_FILE" | sed 's/^/    /'
+  else
+    warn "$PAM_FILE: not enabled"
+  fi
+}
+
+do_undo() {
+  pam_line_present || die "nothing to undo — no yubikey-sudo block in $PAM_FILE"
+
+  step "removing the PAM block"
+  local tmp
+  tmp="$(mktemp)"
+  awk -v b="$BEGIN_MARKER" -v e="$END_MARKER" '
+    $0 ~ b { skip = 1; next }
+    skip   { if ($0 ~ e) skip = 0; next }
+             { print }
+  ' "$PAM_FILE" >"$tmp"
+
+  sudo install -m 0644 -o root -g root "$tmp" "$PAM_FILE"
+  rm -f "$tmp"
+  info "sudo is back to password-only"
+  info "the credentials in $MAPPINGS are left alone — delete them by hand if you want them gone"
+}
+
+do_register() {
+  local mode="$1" # first | add
+
+  # ── preflight ───────────────────────────────────────────────────────────────
+
+  if ! have pamu2fcfg; then
+    step "installing pam-u2f"
+    sudo pacman -S --needed --noconfirm pam-u2f
+  fi
+
+  [[ -f /usr/lib/security/pam_u2f.so ]] ||
+    die "pam_u2f.so is missing even after installing pam-u2f — stopping before touching $PAM_FILE"
+
+  if have fido2-token && [[ -z "$(fido2-token -L 2>/dev/null)" ]]; then
+    die "no FIDO authenticator detected — plug the YubiKey in and re-run"
+  fi
+
+  if [[ "$mode" == first ]] && pam_line_present; then
+    warn "already enabled in $PAM_FILE — use --add to register another key"
+    exit 0
+  fi
+
+  local origin
+  origin="$(current_origin)"
+
+  # ── register ────────────────────────────────────────────────────────────────
+  # Always before the PAM edit: a PAM line pointing at an empty mapping file is
+  # useless, but a mapping file with no PAM line is harmless.
+
+  step "registering the key"
+  info "relying party: $origin"
+  info "touch the YubiKey when it blinks..."
+
+  local cred
+  if [[ "$mode" == first ]]; then
+    cred="$(pamu2fcfg -u "$USER" -o "$origin")" || die "registration failed or was cancelled"
+  else
+    # -n prints just the credential, for appending to an existing user's line.
+    cred="$(pamu2fcfg -n -o "$origin")" || die "registration failed or was cancelled"
+  fi
+
+  [[ -n "$cred" ]] || die "pamu2fcfg produced nothing — not touching anything"
+
+  # ── mapping file ────────────────────────────────────────────────────────────
+  # Format is  user:cred1:cred2:...  one line per user. Parsed as root, so it
+  # must be root-owned and not writable by anyone else.
+
+  step "writing $MAPPINGS"
+  local tmp
+  tmp="$(mktemp)"
+  chmod 0644 "$tmp"
+
+  if [[ -f "$MAPPINGS" ]] && grep -q "^$USER:" "$MAPPINGS"; then
+    if [[ "$mode" == first ]]; then
+      warn "$USER already has credentials — appending rather than replacing them"
+    fi
+    # cred from -n has no user prefix; from -u it does. Strip it either way and
+    # join onto the existing line with ':'.
+    local bare="${cred#"$USER":}"
+    awk -F'\n' -v u="$USER" -v c="$bare" '
+      index($0, u ":") == 1 { print $0 ":" c; next }
+                            { print }
+    ' "$MAPPINGS" >"$tmp"
+  else
+    [[ -f "$MAPPINGS" ]] && cat "$MAPPINGS" >"$tmp"
+    # A -n credential on a brand new line still needs the username prefix.
+    if [[ "$cred" == "$USER":* ]]; then
+      printf '%s\n' "$cred" >>"$tmp"
+    else
+      printf '%s:%s\n' "$USER" "$cred" >>"$tmp"
+    fi
+  fi
+
+  sudo install -m 0644 -o root -g root "$tmp" "$MAPPINGS"
+  rm -f "$tmp"
+  info "$(awk -F: -v u="$USER" '$1 == u {print NF - 1}' "$MAPPINGS") credential(s) now registered for $USER"
+
+  # ── PAM ─────────────────────────────────────────────────────────────────────
+
+  if pam_line_present; then
+    info "$PAM_FILE already has the block — leaving it alone"
+  else
+    step "editing $PAM_FILE"
+
+    local backup="$PAM_FILE.bak.$(date +%Y%m%d-%H%M%S)"
+    sudo cp -a "$PAM_FILE" "$backup"
+    info "backup: $backup"
+
+    tmp="$(mktemp)"
+    chmod 0644 "$tmp"
+    # Insert above the first auth line, so a touch short-circuits the stack
+    # before pam_unix ever asks for a password.
+    awk -v b="$BEGIN_MARKER" -v e="$END_MARKER" -v o="$origin" -v f="$MAPPINGS" '
+      !done && /^auth/ {
+        print b
+        print "auth\tsufficient\tpam_u2f.so authfile=" f " origin=" o " cue"
+        print e
+        done = 1
+      }
+      { print }
+    ' "$PAM_FILE" >"$tmp"
+
+    grep -qF "$BEGIN_MARKER" "$tmp" ||
+      die "could not find an auth line in $PAM_FILE — left it untouched"
+
+    sudo install -m 0644 -o root -g root "$tmp" "$PAM_FILE"
+    rm -f "$tmp"
+    sed -n "/$BEGIN_MARKER/,/$END_MARKER/p" "$PAM_FILE" | sed 's/^/    /'
+  fi
+
+  # ── test ────────────────────────────────────────────────────────────────────
+
+  step "test it now, while you still have that root shell"
+  cat <<NOTE
+  In another terminal:
+
+      sudo -k && sudo true      # should ask for a touch, not a password
+
+  If it hangs or refuses, from the root shell you kept open:
+
+      $(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)/yubikey-sudo --undo
+
+  Then, once it works:
+
+      ./yubikey-sudo --add      # register a backup key, seriously
+
+  Only sudo is changed. Login, display manager, polkit and ssh are untouched —
+  a key that stops working can never lock you out of the machine itself.
+NOTE
+}
+
+case "${1:---first}" in
+--first | '') do_register first ;;
+--add) do_register add ;;
+--status) do_status ;;
+--undo) do_undo ;;
+-h | --help) sed -n '2,40p' "$0" | sed 's/^# \{0,1\}//' ;;
+*) die "unknown option: $1 (try --help)" ;;
+esac
+
+# ── want real 2FA instead? ────────────────────────────────────────────────────
+# Change `sufficient` to `required` in the block this script writes. Then sudo
+# needs the password AND a touch. Do it only with a backup key registered, and
+# test it with a root shell open — if the key dies, so does sudo.

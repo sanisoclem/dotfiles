@@ -1,0 +1,29 @@
+// ────────────── Input ──────────────
+// https://yalter.github.io/niri/Configuration:-Input
+
+input {
+    keyboard {
+        xkb {
+            // Nothing set: Mod is Super, Alt is Alt.
+            // layout "us"
+        }
+
+        numlock
+    }
+
+    touchpad {
+        tap
+        natural-scroll
+    }
+
+    // Warp the pointer to the middle of whatever window takes focus.
+    warp-mouse-to-focus
+
+    // Focus follows the mouse, but only across windows already fully on screen —
+    // max-scroll-amount="0%" stops a stray pointer from scrolling the view.
+    focus-follows-mouse max-scroll-amount="0%"
+
+    // From the CachyOS defaults: re-selecting the current workspace bounces you
+    // back to the previous one.
+    workspace-auto-back-and-forth
+}

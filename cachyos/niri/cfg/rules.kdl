@@ -1,0 +1,75 @@
+// ────────────── Window & layer rules ──────────────
+// https://yalter.github.io/niri/Configuration:-Window-Rules
+
+window-rule {
+    geometry-corner-radius 9
+    clip-to-geometry true
+}
+
+// Work around WezTerm's initial configure bug with an empty default width.
+window-rule {
+    match app-id=r#"^org\.wezfurlong\.wezterm$"#
+    default-column-width {}
+}
+
+// Float the Firefox picture-in-picture player. The regex matches both the host
+// package (app-id "firefox") and the Flatpak ("org.mozilla.firefox").
+window-rule {
+    match app-id=r#"firefox$"# title="^Picture-in-Picture$"
+    open-floating true
+}
+
+// xwaylandvideobridge wants a real window; give it a 1×1 invisible one.
+window-rule {
+    match app-id="xwaylandvideobridge"
+    open-floating true
+    default-column-width { fixed 1; }
+    default-window-height { fixed 1; }
+    opacity 0.0
+}
+
+// noctalia's settings window is a dialog, not a tile.
+window-rule {
+    match app-id="dev.noctalia.Noctalia"
+    open-floating true
+    default-column-width { fixed 1080; }
+    default-window-height { fixed 920; }
+}
+
+// From the CachyOS defaults: opt every window into the blur configured in
+// misc.kdl. Without this rule the blur block does nothing.
+window-rule {
+    background-effect {
+        blur true
+        xray false
+    }
+}
+
+// From the CachyOS defaults: float Steam's windows, but not its main one, and
+// pin its notification toasts out of the way.
+window-rule {
+    match app-id="steam"
+    exclude title=r#"^[Ss]team$"#
+    open-floating true
+}
+
+window-rule {
+    match app-id="steam" title=r#"^notificationtoasts_\d+_desktop$"#
+    default-floating-position x=10 y=10 relative-to="bottom-right"
+    open-focused false
+}
+
+// The wallpaper layer sits behind the windows, not over them.
+layer-rule {
+    match namespace="^noctalia-wallpaper"
+    place-within-backdrop true
+}
+
+// From the CachyOS defaults: the noctalia surfaces get the blurred backdrop.
+layer-rule {
+    match namespace="^noctalia-(bar-[^\"]+|notification|dock|panel|attached-panel|osd)$"
+    background-effect {
+        xray false
+        // blur false
+    }
+}

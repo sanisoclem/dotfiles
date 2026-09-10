@@ -1,0 +1,151 @@
+config_version = 14
+
+[bar.default]
+center = [ "control-center", "workspaces" ]
+contact_shadow = true
+end = [ "audio_visualizer", "tray", "notifications", "clipboard", "volume", "brightness", "battery" ]
+margin_ends = 0
+position = "left"
+start = [ "session", "wallpaper", "mel/wallpaper-refresh:widget", "thepunkoff/pomodoro:widget", "clock", "date" ]
+thickness = 48
+
+[control_center]
+sidebar = "full"
+
+[desktop_widgets]
+schema_version = 2
+widget_order = [ "desktop-widget-0000000000000002", "desktop-widget-0000000000000003", "desktop-widget-0000000000000004" ]
+
+    [desktop_widgets.grid]
+    cell_size = 16
+    major_interval = 4
+    visible = true
+
+    [desktop_widgets.widget.desktop-widget-0000000000000002]
+    box_height = 0.0
+    box_width = 0.0
+    cx = 1897.0
+    cy = 322.0
+    output = "HDMI-A-2"
+    placement_height = 1296.0
+    placement_width = 3072.0
+    rotation = 0.0
+    type = "clock"
+
+    [desktop_widgets.widget.desktop-widget-0000000000000003]
+    box_height = 0.0
+    box_width = 0.0
+    cx = 1536.0
+    cy = 675.0
+    output = "HDMI-A-2"
+    placement_height = 1296.0
+    placement_width = 3072.0
+    rotation = 0.0
+    type = "calendar"
+
+    [desktop_widgets.widget.desktop-widget-0000000000000004]
+    box_height = 0.0
+    box_width = 0.0
+    cx = 1254.0
+    cy = 328.0
+    output = "HDMI-A-2"
+    placement_height = 1296.0
+    placement_width = 3072.0
+    rotation = 0.0
+    type = "audio_visualizer"
+
+        [desktop_widgets.widget.desktop-widget-0000000000000004.settings]
+        bands = 32
+        show_when_idle = true
+
+[location]
+auto_locate = true
+
+[lockscreen_widgets]
+enabled = false
+schema_version = 2
+widget_order = [ "lockscreen-login-box@HDMI-A-2" ]
+
+    [lockscreen_widgets.grid]
+    cell_size = 16
+    major_interval = 4
+    visible = true
+
+    [lockscreen_widgets.widget."lockscreen-login-box@HDMI-A-2"]
+    box_height = 196.0
+    box_width = 810.0
+    cx = 1536.0
+    cy = 1077.60009765625
+    output = "HDMI-A-2"
+    placement_height = 1296.0
+    placement_width = 3072.0
+    rotation = 0.0
+    type = "login_box"
+
+        [lockscreen_widgets.widget."lockscreen-login-box@HDMI-A-2".settings]
+        background_color = "surface_variant"
+        background_opacity = 0.88
+        background_radius = 12.0
+        center_password_text = false
+        input_opacity = 1.0
+        input_radius = 6.0
+        layout = "regular"
+        show_caps_lock = true
+        show_keyboard_layout = true
+        show_login_button = true
+        show_media = true
+        show_session_buttons = true
+        show_unlock_hint = true
+        show_weather = true
+
+[nightlight]
+enabled = true
+
+[plugins]
+auto_update = "all"
+enabled = [ "mel/wallpaper-refresh", "thepunkoff/pomodoro" ]
+
+    [[plugins.source]]
+    enabled = true
+    kind = "git"
+    location = "https://github.com/noctalia-dev/official-plugins"
+    name = "official"
+
+    [[plugins.source]]
+    enabled = true
+    kind = "git"
+    location = "https://github.com/noctalia-dev/community-plugins"
+    name = "community"
+
+    [[plugins.source]]
+    enabled = true
+    kind = "path"
+    location = "/home/mel/code/dotfiles/cachyos/noctalia-plugins"
+    name = "local"
+
+[theme]
+builtin = "Tokyo-Night"
+mode = "dark"
+source = "wallpaper"
+wallpaper_scheme = "m3-fruit-salad"
+
+    [theme.templates]
+    builtin_ids = [ "btop", "gtk3", "gtk4", "ghostty", "niri", "starship" ]
+
+[wallpaper.automation]
+enabled = true
+
+[widget.audio_visualizer]
+bands = 20
+width = 205
+
+[widget.clock]
+font_family = "Symbols Nerd Font Mono"
+format = "{:%a %d %b %H:%M}"
+vertical_format = "{:%H\\n%M\\n%S}"
+
+[widget.date]
+vertical_format = "{:%a\\n%d\\n%m}"
+
+[widget.network]
+show_label = false
