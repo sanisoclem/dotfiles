@@ -23,6 +23,8 @@ binds {
     Mod+Comma { spawn-sh "noctalia msg settings-toggle"; }
     Alt+Tab { spawn-sh "noctalia msg window-switcher"; }
     Mod+BackSpace hotkey-overlay-title="Session: lock, logout, reboot, shutdown" { spawn-sh "noctalia msg panel-toggle session"; }
+    Mod+Shift+O hotkey-overlay-title="Pomodoro timer" { spawn-sh "noctalia msg panel-toggle thepunkoff/pomodoro:panel"; }
+    Mod+Ctrl+Shift+C hotkey-overlay-title="Calculator" { spawn-sh "noctalia msg panel-toggle samuelskovbakke/calculator-plus:panel"; }
     Mod+Shift+X hotkey-overlay-title="Next wallpaper" { spawn-sh "noctalia msg wallpaper-next"; }
     // Caffeine: while on, nothing idles the session — no blank, no lock, no sleep.
     Mod+Shift+C hotkey-overlay-title="Toggle idle inhibit (caffeine)" { spawn-sh "noctalia msg caffeine-toggle"; }

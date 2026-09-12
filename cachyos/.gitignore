@@ -2,9 +2,6 @@
 !.gitignore
 !fish
 !fish/**
-# fish rewrites this at runtime, and everything it held is set by
-# config.fish (paths) or cachyos-config.fish (__done_*). Shipping a
-# trimmed copy erased fish-pure-prompt's 76 universal variables.
 fish/fish_variables
 !ghostty
 !ghostty/**
@@ -12,8 +9,6 @@ fish/fish_variables
 !scripts/**
 !scripts-manual
 !scripts-manual/**
-# Source for the login theme. Installed root-owned to /usr/share/sddm/themes by
-# scripts-manual/sddm-noctalia; SDDM never reads it from here.
 !sddm-theme
 !sddm-theme/**
 !niri
@@ -28,7 +23,5 @@ fish/fish_variables
 !noctalia-plugins/**
 !noctalia
 !noctalia/config.toml
-# noctalia reads this as live config and reloads within a second of it changing.
-# Track it, edit it by hand, but never have a script write to it.
 !noctalia/settings.toml
 systemd/user/*.wants/
