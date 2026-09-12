@@ -25,3 +25,5 @@ fish/fish_variables
 !noctalia/config.toml
 !noctalia/settings.toml
 systemd/user/*.wants/
+!zellij
+!zellij/**
