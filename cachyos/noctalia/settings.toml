@@ -1,12 +1,12 @@
 config_version = 14
 
 [bar.default]
-center = [ "control-center", "workspaces" ]
+center = [ "control-center", "thepunkoff/pomodoro:widget", "widget", "workspaces" ]
 contact_shadow = true
-end = [ "audio_visualizer", "tray", "notifications", "clipboard", "volume", "brightness", "battery" ]
+end = [ "audio_visualizer", "tray", "notifications", "keybinds", "clipboard", "volume", "brightness", "battery" ]
 margin_ends = 0
 position = "left"
-start = [ "session", "wallpaper", "mel/wallpaper-refresh:widget", "thepunkoff/pomodoro:widget", "clock", "date" ]
+start = [ "session", "wallpaper", "mel/wallpaper-refresh:widget", "clock", "date" ]
 thickness = 48
 
 [control_center]
@@ -14,7 +14,13 @@ sidebar = "full"
 
 [desktop_widgets]
 schema_version = 2
-widget_order = [ "desktop-widget-0000000000000002", "desktop-widget-0000000000000003", "desktop-widget-0000000000000004" ]
+widget_order = [
+    "desktop-widget-0000000000000002",
+    "desktop-widget-0000000000000003",
+    "desktop-widget-0000000000000004",
+    "desktop-widget-0000000000000005",
+    "desktop-widget-0000000000000006"
+]
 
     [desktop_widgets.grid]
     cell_size = 16
@@ -57,6 +63,36 @@ widget_order = [ "desktop-widget-0000000000000002", "desktop-widget-000000000000
         [desktop_widgets.widget.desktop-widget-0000000000000004.settings]
         bands = 32
         show_when_idle = true
+
+    [desktop_widgets.widget.desktop-widget-0000000000000005]
+    box_height = 0.0
+    box_width = 0.0
+    cx = 2374.0
+    cy = 876.0
+    output = "HDMI-A-1"
+    placement_height = 1080.0
+    placement_width = 2560.0
+    rotation = 0.0
+    type = "calendar"
+
+        [desktop_widgets.widget.desktop-widget-0000000000000005.settings]
+        background = false
+        show_events = false
+
+    [desktop_widgets.widget.desktop-widget-0000000000000006]
+    box_height = 64.0
+    box_width = 144.0
+    cx = 2374.0
+    cy = 604.0
+    output = "HDMI-A-1"
+    placement_height = 1080.0
+    placement_width = 2560.0
+    rotation = 0.0
+    type = "clock"
+
+        [desktop_widgets.widget.desktop-widget-0000000000000006.settings]
+        background = false
+        clock_style = "digital"
 
 [location]
 auto_locate = true
@@ -130,7 +166,13 @@ enabled = true
 
 [plugins]
 auto_update = "all"
-enabled = [ "mel/wallpaper-refresh", "thepunkoff/pomodoro", "noctalia/wallpaper_depth" ]
+enabled = [
+    "mel/wallpaper-refresh",
+    "thepunkoff/pomodoro",
+    "noctalia/wallpaper_depth",
+    "samuelskovbakke/calculator-plus",
+    "kenn/keybind-cheatsheet"
+]
 
     [[plugins.source]]
     enabled = true
@@ -177,5 +219,11 @@ vertical_format = "{:%H\\n%M\\n%S}"
 [widget.date]
 vertical_format = "{:%a\\n%d\\n%m}"
 
+[widget.keybinds]
+type = "kenn/keybind-cheatsheet:keybinds"
+
 [widget.network]
 show_label = false
+
+[widget.widget]
+type = "samuelskovbakke/calculator-plus:widget"
