@@ -40,6 +40,19 @@ check_imports() {
   info "imports are all available on this machine"
 }
 
+# sddm ships both greeters; the Qt5 one stays executable long after Qt5 is gone.
+runnable_greeter() {
+  local greeter
+  for greeter in /usr/bin/sddm-greeter-qt6 /usr/bin/sddm-greeter; do
+    [[ -x "$greeter" ]] || continue
+    if ! ldd "$greeter" 2>/dev/null | grep -q 'not found'; then
+      printf '%s\n' "$greeter"
+      return 0
+    fi
+  done
+  return 1
+}
+
 do_preview() {
   [[ -d "$THEME_SRC" ]] || die "no theme source at $THEME_SRC"
   check_imports "$THEME_SRC"
@@ -47,9 +60,9 @@ do_preview() {
   [[ -f "$DROP/wallpaper.jpg" ]] ||
     warn "no wallpaper at $DROP/wallpaper.jpg yet — the preview will show the flat background"
 
-  local greeter=/usr/bin/sddm-greeter
-  [[ -x "$greeter" ]] || greeter=/usr/bin/sddm-greeter-qt6
-  [[ -x "$greeter" ]] || die "no sddm greeter binary found"
+  local greeter
+  greeter="$(runnable_greeter)" ||
+    die "no sddm greeter can load its Qt libraries — check 'ldd /usr/bin/sddm-greeter-qt6'"
 
   step "preview with $(basename "$greeter") (close the window when done)"
   "$greeter" --test-mode --theme "$THEME_SRC"
