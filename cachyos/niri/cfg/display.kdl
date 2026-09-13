@@ -4,9 +4,9 @@
 // so a config that names a monitor you don't have is harmless.
 // https://yalter.github.io/niri/Configuration:-Outputs
 
-output "HDMI-A-2" {
-    mode "5120x2160@60.000"
-    scale 1.67
+output "DP-2" {
+    mode "5120x2160@120.000"
+    scale 1.9
     transform "normal"
     position x=0 y=0
 }

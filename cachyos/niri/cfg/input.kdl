@@ -23,7 +23,6 @@ input {
     // max-scroll-amount="0%" stops a stray pointer from scrolling the view.
     focus-follows-mouse max-scroll-amount="0%"
 
-    // From the CachyOS defaults: re-selecting the current workspace bounces you
-    // back to the previous one.
-    workspace-auto-back-and-forth
+    // this option sucks
+    // workspace-auto-back-and-forth
 }
