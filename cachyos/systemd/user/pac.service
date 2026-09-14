@@ -1,0 +1,12 @@
+[Unit]
+Description=proxy.pac server
+After=network.target
+
+[Service]
+ExecStart=/usr/bin/darkhttpd /srv/http --addr 127.0.0.1 --port 9085 \
+  --index proxy.pac --no-listing \
+  --default-mimetype application/x-ns-proxy-autoconfig
+Restart=always
+
+[Install]
+WantedBy=default.target

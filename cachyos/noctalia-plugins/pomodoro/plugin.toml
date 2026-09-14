@@ -1,0 +1,137 @@
+id           = "mel/pomodoro"
+name         = "Pomodoro Timer"
+version      = "1.3.1"
+plugin_api   = 30
+author       = "mel"
+license = "MIT"
+icon = "brain"
+description = "Simple pomodoro timer. Fork of thepunkoff/pomodoro: alarm always audible, panel pops open when a stage ends."
+tags = ["bar", "panel", "service", "productivity", "time"]
+dependencies = ["ffplay"]
+
+[[setting]]
+key     = "work-duration"
+type    = "int"
+label_key = "settings.work-duration.label"
+description_key = "settings.work-duration.description"
+default = 25
+
+[[setting]]
+key     = "short-break-duration"
+type    = "int"
+label_key = "settings.short-break-duration.label"
+description_key = "settings.short-break-duration.description"
+default = 5
+
+[[setting]]
+key     = "long-break-duration"
+type    = "int"
+label_key = "settings.long-break-duration.label"
+description_key = "settings.long-break-duration.description"
+default = 15
+
+[[setting]]
+key     = "sessions-before-long-break"
+type    = "int"
+label_key = "settings.sessions-before-long-break.label"
+description_key = "settings.sessions-before-long-break.description"
+default = 4
+min = 1
+
+[[setting]]
+key     = "auto-start-breaks"
+type    = "bool"
+label_key = "settings.auto-start-breaks.label"
+description_key = "settings.auto-start-breaks.description"
+default = false
+
+[[setting]]
+key     = "auto-start-work"
+type    = "bool"
+label_key = "settings.auto-start-work.label"
+description_key = "settings.auto-start-work.description"
+default = false
+
+[[setting]]
+key     = "enable-work-timer-sound"
+type    = "bool"
+label_key = "settings.enable-work-timer-sound.label"
+description_key = "settings.enable-work-timer-sound.description"
+default = false
+
+[[setting]]
+key     = "use-bundled-alarm-sound"
+type    = "bool"
+label_key = "settings.use-bundled-alarm-sound.label"
+description_key = "settings.use-bundled-alarm-sound.description"
+default = true
+
+[[setting]]
+key     = "bypass-noctalia-sound-globals"
+type    = "bool"
+label_key = "settings.bypass-noctalia-sound-globals.label"
+description_key = "settings.bypass-noctalia-sound-globals.description"
+visible_when = { key = "use-bundled-alarm-sound", values = ["true"] }
+default = true
+
+[[setting]]
+key     = "open-panel-on-expiry"
+type    = "bool"
+label_key = "settings.open-panel-on-expiry.label"
+description_key = "settings.open-panel-on-expiry.description"
+default = true
+
+[[setting]]
+key     = "notify-on-expiry"
+type    = "bool"
+label_key = "settings.notify-on-expiry.label"
+description_key = "settings.notify-on-expiry.description"
+default = true
+
+[[widget]]
+id = "widget"
+entry = "src/widget.luau"
+
+    [[widget.setting]]
+    key     = "widget-glyph-main"
+    type    = "glyph"
+    label_key = "settings.widget.glyph-main.label"
+    description_key = "settings.widget.glyph-main.description"
+    default = "brain"
+
+    [[widget.setting]]
+    key     = "widget-glyph-work"
+    type    = "glyph"
+    label_key = "settings.widget.glyph-work.label"
+    description_key = "settings.widget.glyph-work.description"
+    default = "brain"
+
+    [[widget.setting]]
+    key     = "widget-glyph-break"
+    type    = "glyph"
+    label_key = "settings.widget.glyph-break.label"
+    description_key = "settings.widget.glyph-break.description"
+    default = "coffee"
+
+[[panel]]
+id = "panel"
+entry = "src/panel.luau"
+placement = "attached"
+position = "auto"
+open_near_click = false
+# A panel that pops open on expiry is useless if the next stray click dismisses
+# it, so it stays up until it is explicitly closed (the bar widget, the F14
+# keybind, or a button on the panel itself).
+dismiss_on_outside_click = false
+# Space = start/pause, Ctrl+Space = skip. capture_keys needs keyboard_focus
+# "on_demand" or "exclusive"; niri does not hand an on_demand layer surface the
+# keyboard until it is clicked, so the shortcuts only reach the panel with
+# "exclusive". Note these manifest keys are silently ignored below plugin_api 30.
+keyboard_focus = "exclusive"
+capture_keys = ["space", "ctrl+space", "up"]
+width = 350
+height = 250
+
+[[service]]
+id = "pomodoro"
+entry = "src/pomodoro.luau"

@@ -1,0 +1,79 @@
+{
+  "button": {
+    "pause": "Pause",
+    "reset": "Reset",
+    "reset-all": "Reset All",
+    "resume": "Resume",
+    "skip": "Skip",
+    "start": "Start"
+  },
+  "long-break": "Long Break",
+  "notification": {
+    "long-break-complete": "Long break over! Ready for a new cycle?",
+    "short-break-complete": "Break over! Ready to focus?",
+    "work-complete": "Work session complete! Time for a break."
+  },
+  "session": "Session",
+  "settings": {
+    "auto-start-breaks": {
+      "description": "Automatically start break timer after work session",
+      "label": "Auto-start Breaks"
+    },
+    "auto-start-work": {
+      "description": "Automatically start work timer after break",
+      "label": "Auto-start Work"
+    },
+    "bypass-noctalia-sound-globals": {
+      "description": "Play the alarm through ffplay instead of the shell's mixer, so it is heard even when sounds are disabled in Noctalia's config/GUI. Requires ffplay. Applies to the alarm only - tick/tock always go through the shell mixer and need Noctalia's global sounds enabled.",
+      "label": "Bypass Noctalia Sound Globals"
+    },
+    "enable-work-timer-sound": {
+      "description": "Play tick/tock sounds each second while a work session is running. Break timers stay silent.",
+      "label": "Enable Work Timer Sound"
+    },
+    "long-break-duration": {
+      "description": "Duration of long breaks in minutes",
+      "label": "Long Break Duration"
+    },
+    "notify-on-expiry": {
+      "description": "Also send a desktop notification when a work session or break finishes.",
+      "label": "Notify When Timer Ends"
+    },
+    "open-panel-on-expiry": {
+      "description": "Pop the timer panel open when a work session or break finishes, so the end of a stage is visible even if notifications are muted.",
+      "label": "Show Panel When Timer Ends"
+    },
+    "sessions-before-long-break": {
+      "description": "Number of sessions before a long break",
+      "label": "Sessions Before Long Break"
+    },
+    "short-break-duration": {
+      "description": "Duration of short breaks in minutes",
+      "label": "Short Break Duration"
+    },
+    "use-bundled-alarm-sound": {
+      "description": "Play the bundled alarm sound when a work session or break is over. Silence the default notification sound with filters if you don't want both.",
+      "label": "Use Bundled Alarm Sound"
+    },
+    "widget": {
+      "glyph-break": {
+        "description": "Name of the icon that appears during a break.",
+        "label": "Break Icon"
+      },
+      "glyph-main": {
+        "description": "Name of the icon that appears when idle.",
+        "label": "Main Icon"
+      },
+      "glyph-work": {
+        "description": "Name of the icon that appears when working.",
+        "label": "Work Icon"
+      }
+    },
+    "work-duration": {
+      "description": "Duration of each work session in minutes",
+      "label": "Work Duration"
+    }
+  },
+  "short-break": "Short Break",
+  "work": "Work"
+}

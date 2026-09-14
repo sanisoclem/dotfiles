@@ -14,6 +14,7 @@ if status is-interactive
     fish_add_path ~/.cargo/bin
     fish_add_path ~/.local/share/pnpm
     fish_add_path /usr/local/bin
+    fish_add_path /home/mel/.dotnet/tools
 
     # ── modern replacements ──────────────────────────────────────────────────
     if command -q eza
