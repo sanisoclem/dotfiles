@@ -1,0 +1,60 @@
+#!/usr/bin/env bash
+
+set -euo pipefail
+
+PINENTRY="/usr/bin/pinentry-curses"
+GNUPGHOME="${GNUPGHOME:-$HOME/.gnupg}"
+AGENT_CONF="$GNUPGHOME/gpg-agent.conf"
+GPG_CONF="$GNUPGHOME/gpg.conf"
+
+step() { printf '\n\033[1;34m==>\033[0m %s\n' "$*"; }
+info() { printf '  %s\n' "$*"; }
+die() {
+  printf '\033[1;31mfatal:\033[0m %s\n' "$*" >&2
+  exit 1
+}
+
+point_agent_at_pinentry() {
+  step "pointing gpg-agent at $PINENTRY"
+  mkdir -p "$GNUPGHOME"
+  chmod 700 "$GNUPGHOME"
+  touch "$AGENT_CONF"
+  chmod 600 "$AGENT_CONF"
+
+  if grep -qs '^pinentry-program' "$AGENT_CONF"; then
+    sed -i "s|^pinentry-program .*|pinentry-program $PINENTRY|" "$AGENT_CONF"
+  else
+    printf 'pinentry-program %s\n' "$PINENTRY" >>"$AGENT_CONF"
+  fi
+  info "$(grep '^pinentry-program' "$AGENT_CONF")"
+}
+
+ask_in_calling_terminal() {
+  step "asking for the passphrase in the calling terminal"
+  touch "$GPG_CONF"
+  chmod 600 "$GPG_CONF"
+
+  if grep -qs '^pinentry-mode' "$GPG_CONF"; then
+    sed -i 's|^pinentry-mode .*|pinentry-mode loopback|' "$GPG_CONF"
+  else
+    printf 'pinentry-mode loopback\n' >>"$GPG_CONF"
+  fi
+  info "$(grep '^pinentry-mode' "$GPG_CONF")"
+}
+
+restart_agent() {
+  step "restarting gpg-agent"
+  gpgconf --kill gpg-agent
+  info "stopped — systemd starts it again on the next gpg call"
+}
+
+[[ -x "$PINENTRY" ]] || die "$PINENTRY is missing — install the pinentry package"
+
+point_agent_at_pinentry
+ask_in_calling_terminal
+restart_agent
+
+cat <<NOTE
+
+  Open a new shell so config.fish sets GPG_TTY.
+NOTE

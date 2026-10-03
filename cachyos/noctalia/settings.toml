@@ -94,6 +94,16 @@ widget_order = [
         background = false
         clock_style = "digital"
 
+[idle]
+
+    [idle.behavior.screen-off]
+    action = "screen_off"
+    timeout = 900
+
+    [idle.behavior.suspend]
+    action = "suspend"
+    timeout = 14400
+
 [location]
 auto_locate = true
 

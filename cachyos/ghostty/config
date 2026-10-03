@@ -24,6 +24,10 @@ cursor-style-blink = false
 keybind = performable:ctrl+c=copy_to_clipboard
 keybind = ctrl+v=paste_from_clipboard
 
+# Ghostty binds ctrl+enter to toggle_fullscreen by default, which stops it ever
+# reaching the running program. sqlservertui uses it to run the query.
+keybind = ctrl+enter=unbind
+
 # Slow down mouse scrolling
 mouse-scroll-multiplier = 0.95
 theme = noctalia
