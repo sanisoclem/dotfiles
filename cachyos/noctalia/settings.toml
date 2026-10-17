@@ -212,7 +212,7 @@ source = "wallpaper"
 wallpaper_scheme = "m3-fruit-salad"
 
     [theme.templates]
-    builtin_ids = [ "btop", "gtk3", "gtk4", "ghostty", "niri", "starship" ]
+    builtin_ids = [ "gtk3", "gtk4", "ghostty", "niri", "starship" ]
 
 [wallpaper.automation]
 enabled = true
