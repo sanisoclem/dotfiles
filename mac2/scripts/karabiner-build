@@ -1,0 +1,18 @@
+#!/usr/bin/env bash
+#
+# karabiner-build — regenerate the rules in karabiner.json from binds.jq. Run it
+# after editing binds.jq; Karabiner reloads karabiner.json on its own. Anything
+# else in karabiner.json, such as settings changed in the Karabiner-Elements
+# window, is kept.
+
+set -euo pipefail
+
+DIR="$HOME/.config/karabiner"
+JSON="$DIR/karabiner.json"
+JQ=/opt/homebrew/bin/jq
+
+[[ -f "$JSON" ]] || echo '{"profiles": [{"name": "Default profile", "selected": true}]}' >"$JSON"
+
+"$JQ" -L "$DIR" 'include "binds"; with_rules' "$JSON" >"$JSON.new"
+mv "$JSON.new" "$JSON"
+echo "wrote $JSON"

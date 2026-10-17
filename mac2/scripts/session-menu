@@ -1,0 +1,31 @@
+#!/usr/bin/env bash
+#
+# session-menu — lock, sleep, log out, restart or shut down, like noctalia's
+# session panel. Pass an action ("Log out") to run it without the menu.
+#
+# Lock turns the display off; that locks because setup sets the screen lock to
+# "immediately".
+
+set -euo pipefail
+
+CHOOSE=/opt/homebrew/bin/choose
+ACTIONS=(Lock Sleep "Log out" Restart "Shut down")
+
+system_events() { osascript -e "tell application \"System Events\" to $1"; }
+
+run() {
+  case "$1" in
+  Lock) pmset displaysleepnow ;;
+  Sleep) pmset sleepnow ;;
+  "Log out") system_events "log out" ;;
+  Restart) system_events "restart" ;;
+  "Shut down") system_events "shut down" ;;
+  *)
+    echo "unknown action: $1" >&2
+    exit 1
+    ;;
+  esac
+}
+
+choice="${1:-$(printf '%s\n' "${ACTIONS[@]}" | "$CHOOSE" -p Session)}" || exit 0
+run "$choice"

@@ -1,0 +1,9 @@
+#!/usr/bin/env bash
+#
+# hotkeys — searchable list of the window manager keybinds, like niri's
+# show-hotkey-overlay. The list comes from karabiner/binds.jq.
+
+set -euo pipefail
+
+/opt/homebrew/bin/jq -n -r -L "$HOME/.config/karabiner" 'include "binds"; cheatsheet' |
+  /opt/homebrew/bin/choose -p Hotkeys -n 30 -w 40 >/dev/null || true

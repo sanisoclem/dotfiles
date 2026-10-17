@@ -1,0 +1,12 @@
+#!/usr/bin/env bash
+#
+# ghostty-window — open a new Ghostty window, like `spawn "ghostty"` in niri.
+# `open -na Ghostty` would start a second Ghostty process instead.
+
+set -euo pipefail
+
+if pgrep -xq ghostty; then
+  osascript -e 'tell application "Ghostty"' -e 'new window' -e 'activate' -e 'end tell'
+else
+  open -a Ghostty
+fi

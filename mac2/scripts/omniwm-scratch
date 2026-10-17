@@ -1,0 +1,23 @@
+#!/usr/bin/env bash
+#
+# omniwm-scratch — toggle the "scratch" workspace, the way Hyprland's special
+# workspace works: jump to it from anywhere, and jump back to wherever you came
+# from when you're already sitting on it. Same as niri-scratch on CachyOS.
+#
+# OmniWM only accepts numeric workspace names, so "scratch" is the display name
+# of workspace 10 (omniwm/settings.toml).
+
+set -euo pipefail
+
+WS="scratch"
+OMNIWMCTL=/opt/homebrew/bin/omniwmctl
+JQ=/opt/homebrew/bin/jq
+
+current="$("$OMNIWMCTL" query workspaces --current |
+  "$JQ" -r '.result.payload.workspaces[0].displayName // ""')"
+
+if [[ "$current" == "$WS" ]]; then
+  "$OMNIWMCTL" command switch-workspace back-and-forth
+else
+  "$OMNIWMCTL" workspace focus-name "$WS"
+fi

@@ -25,8 +25,8 @@
 	rbmi2 = rebase origin/main -i --autosquash
 
 	b = "!git for-each-ref --sort='-authordate' --format='%(authordate)%09%(objectname:short)%09%(refname)' refs/heads | sed -e 's-refs/heads/--'"
-	cleanup = "!git fetch --prune -v && git co master && git merge origin/master --ff-only && git branch --merged | grep -v '\\*' > /tmp/merged && vi /tmp/merged && xargs git branch -d < /tmp/merged"
-	cleanup2 = "!git fetch --prune -v && git co main && git merge origin/main --ff-only && git branch --merged | grep -v '\\*' > /tmp/merged-main && vi /tmp/merged-main && xargs git branch -d < /tmp/merged-main"
+	cleanup = "!git fetch --prune -v && git co master && git merge origin/master --ff-only && git branch --merged | grep -v '\\*' > /tmp/merged && nvim /tmp/merged && xargs git branch -d < /tmp/merged"
+	cleanup2 = "!git fetch --prune -v && git co main && git merge origin/main --ff-only && git branch --merged | grep -v '\\*' > /tmp/merged-main && nvim /tmp/merged-main && xargs git branch -d < /tmp/merged-main"
 	sagase = "!f() { git grep -n $1 | while IFS=: read i j k; do git blame -L $j,$j $i | cat; done; }; f"
 [user]
 	email = dev@jerahmeelcosinas.net
@@ -34,3 +34,9 @@
 	signingkey = F5A3386CB2A80124
 [commit]
 	gpgsign = true
+[credential "https://github.com"]
+	helper = 
+	helper = !/usr/bin/gh auth git-credential
+[credential "https://gist.github.com"]
+	helper = 
+	helper = !/usr/bin/gh auth git-credential

@@ -1,0 +1,313 @@
+#!/usr/bin/env bash
+
+set -euo pipefail
+
+REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
+MAC="$REPO_ROOT/mac2"
+CONFIG="$HOME/.config"
+BACKUP="$HOME/.config-backup"
+
+step() { printf '\n\033[1;34m==>\033[0m %s\n' "$*"; }
+info() { printf '  %s\n' "$*"; }
+warn() { printf '\033[1;33m  ! \033[0m%s\n' "$*"; }
+die() {
+  printf '\033[1;31mfatal:\033[0m %s\n' "$*" >&2
+  exit 1
+}
+have() { command -v "$1" >/dev/null 2>&1; }
+
+link() {
+  local src="$1" dst="$2"
+  if [[ -L "$dst" ]]; then
+    info "$dst already a symlink -> $(readlink "$dst")"
+  elif [[ -e "$dst" ]]; then
+    warn "$dst already exists — not touching it"
+  else
+    ln -s "$src" "$dst"
+    info "$dst -> $src"
+  fi
+}
+
+[[ "$(uname -s)" == Darwin ]] || die "not macOS — this script is for the mac"
+[[ "$(uname -m)" == arm64 ]] || die "not Apple Silicon — OmniWM needs it"
+(($(sw_vers -productVersion | cut -d. -f1) >= 26)) ||
+  die "macOS $(sw_vers -productVersion) — OmniWM needs macOS 26 (Tahoe) or later"
+
+# homebrew (its installer also installs the xcode command line tools)
+if [[ ! -x /opt/homebrew/bin/brew ]]; then
+  step "homebrew"
+  /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
+fi
+eval "$(/opt/homebrew/bin/brew shellenv)"
+
+# packages
+
+FORMULAE=(
+  fish starship zoxide fzf
+  bat
+  eza
+  fd
+  ripgrep
+  dust
+  btop procs duf ncdu tree
+  jq yq
+  tealdeer
+  fastfetch atuin direnv just entr hyperfine glow
+  sevenzip
+  unar
+  fortune # fish_greeting
+  carapace
+
+  # dev
+  neovim git gh
+  git-delta
+  difftastic
+  gnupg pinentry-mac
+  lazygit lazydocker zellij yazi superfile
+  docker docker-compose colima tokei
+  uv node
+  cmake
+  openssl
+  sd
+  fnm rustup go
+  gdu figlet
+
+  # yazi's preview backends
+  ffmpeg
+  ffmpegthumbnailer
+  imagemagick
+  poppler chafa
+
+  # desktop
+  choose-gui
+)
+
+CASKS=(
+  omniwm karabiner-elements ghostty zen
+  alt-tab shottr
+  font-fira-code-nerd-font font-symbols-only-nerd-font
+)
+
+step "installing formulae"
+brew install "${FORMULAE[@]}"
+
+step "installing casks"
+brew install --cask "${CASKS[@]}"
+
+if have tte; then
+  info "tte already installed"
+else
+  step "terminaltexteffects (tte)"
+  uv tool install terminaltexteffects
+fi
+
+RUSTUP="$(brew --prefix rustup)/bin/rustup"
+if "$RUSTUP" toolchain list 2>/dev/null | grep -q 'no installed toolchains'; then
+  step "rust toolchain"
+  "$RUSTUP" default stable
+else
+  info "rust toolchain already installed"
+fi
+
+# config symlink
+step "adopting $CONFIG"
+[[ -d "$MAC" ]] || die "no mac2/ directory at $MAC"
+
+if [[ -L "$CONFIG" ]]; then
+  info "already a symlink -> $(readlink "$CONFIG")"
+elif [[ -e "$BACKUP" ]]; then
+  warn "$BACKUP already exists — leaving $CONFIG alone"
+elif [[ ! -e "$CONFIG" ]]; then
+  ln -s "$MAC" "$CONFIG"
+  info "$CONFIG -> $MAC"
+else
+  [[ -d "$CONFIG" ]] || die "$CONFIG is not a directory"
+
+  skipped=()
+  while IFS= read -r -d '' src; do
+    name="$(basename "$src")"
+    if [[ -e "$MAC/$name" || -L "$MAC/$name" ]]; then
+      skipped+=("$name")
+    else
+      cp -a "$src" "$MAC/$name"
+    fi
+  done < <(find "$CONFIG" -mindepth 1 -maxdepth 1 -print0 | sort -z)
+
+  if ((${#skipped[@]})); then
+    info "already in mac2/, skipped:"
+    printf '    %s\n' "${skipped[@]}"
+  fi
+
+  mv "$CONFIG" "$BACKUP"
+  ln -s "$MAC" "$CONFIG"
+  info "$CONFIG -> $MAC, old contents at $BACKUP"
+fi
+
+# github ssh workaround
+step "ssh config"
+mkdir -p "$HOME/.ssh"
+chmod 700 "$HOME/.ssh" # ssh ignores the directory outright if it's too open
+link "$REPO_ROOT/ssh_config" "$HOME/.ssh/config"
+
+step "gitconfig"
+link "$REPO_ROOT/.gitconfig" "$HOME/.gitconfig"
+
+# gpg pinentry
+step "gpg pinentry"
+GNUPGHOME="${GNUPGHOME:-$HOME/.gnupg}"
+AGENT_CONF="$GNUPGHOME/gpg-agent.conf"
+PINENTRY="/opt/homebrew/bin/pinentry-mac"
+
+mkdir -p "$GNUPGHOME"
+chmod 700 "$GNUPGHOME"
+
+if [[ ! -x "$PINENTRY" ]]; then
+  warn "$PINENTRY missing — leaving gpg-agent on its default"
+elif grep -qs '^pinentry-program' "$AGENT_CONF"; then
+  info "already set: $(grep '^pinentry-program' "$AGENT_CONF")"
+else
+  printf 'pinentry-program %s\n' "$PINENTRY" >>"$AGENT_CONF"
+  chmod 600 "$AGENT_CONF"
+  info "wrote $AGENT_CONF"
+  gpgconf --kill gpg-agent >/dev/null 2>&1 || true
+fi
+
+# login shell
+step "login shell"
+FISH="/opt/homebrew/bin/fish"
+if [[ "$(dscl . -read "/Users/$USER" UserShell | awk '{print $2}')" == "$FISH" ]]; then
+  info "already $FISH"
+else
+  grep -qx "$FISH" /etc/shells || echo "$FISH" | sudo tee -a /etc/shells >/dev/null
+  chsh -s "$FISH"
+  info "now $FISH"
+fi
+
+# Home/End move within the line, as on Linux, in every Cocoa text field
+step "text keybindings"
+mkdir -p "$HOME/Library/KeyBindings"
+link "$CONFIG/keybindings/DefaultKeyBinding.dict" "$HOME/Library/KeyBindings/DefaultKeyBinding.dict"
+
+step "macos defaults"
+defaults write -g com.apple.keyboard.fnState -bool true # F5 is F5, not a media key
+defaults write -g ApplePressAndHoldEnabled -bool false  # held keys repeat
+defaults write com.apple.AppleMultitouchTrackpad Clicking -bool true
+defaults -currentHost write -g com.apple.mouse.tapBehavior -int 1
+# OmniWM needs "Displays have separate Spaces" and stable Space order
+defaults write com.apple.spaces spans-displays -bool false
+defaults write com.apple.dock mru-spaces -bool false
+defaults write com.apple.dock autohide -bool true
+for corner in tl tr bl br; do
+  defaults write com.apple.dock "wvous-$corner-corner" -int 1
+done
+# macOS's own tiling and Stage Manager fight OmniWM
+defaults write com.apple.WindowManager EnableTilingByEdgeDrag -bool false
+defaults write com.apple.WindowManager EnableTopTilingByEdgeDrag -bool false
+defaults write com.apple.WindowManager EnableTilingOptionAccelerator -bool false
+defaults write com.apple.WindowManager GloballyEnabled -bool false
+killall Dock
+info "done"
+
+# Mission Control owns Ctrl+arrows, Ctrl+1-9, Ctrl+Space and F11 by default; on
+# Linux those reach the app
+step "freeing shortcuts from mission control"
+disable_symbolic_hotkey() {
+  defaults write com.apple.symbolichotkeys AppleSymbolicHotKeys -dict-add "$1" \
+    "{enabled = 0; value = {type = standard; parameters = ($2); };}"
+}
+disable_symbolic_hotkey 32 "65535, 126, 8650752"
+disable_symbolic_hotkey 34 "65535, 126, 8781824"
+disable_symbolic_hotkey 33 "65535, 125, 8650752"
+disable_symbolic_hotkey 35 "65535, 125, 8781824"
+disable_symbolic_hotkey 79 "65535, 123, 8650752"
+disable_symbolic_hotkey 80 "65535, 123, 8781824"
+disable_symbolic_hotkey 81 "65535, 124, 8650752"
+disable_symbolic_hotkey 82 "65535, 124, 8781824"
+disable_symbolic_hotkey 60 "32, 49, 262144"
+disable_symbolic_hotkey 61 "32, 49, 786432"
+disable_symbolic_hotkey 36 "65535, 103, 8388608"
+disable_symbolic_hotkey 37 "65535, 103, 8519680"
+digit_key_codes=(18 19 20 21 23 22 26 28 25)
+for n in 1 2 3 4 5 6 7 8 9; do
+  disable_symbolic_hotkey "$((117 + n))" "65535, ${digit_key_codes[n - 1]}, 262144"
+done
+/System/Library/PrivateFrameworks/SystemAdministration.framework/Resources/activateSettings -u
+info "done"
+
+step "screen lock"
+if sysadminctl -screenLock status 2>&1 | grep -q immediate; then
+  info "already locks immediately"
+else
+  info "lock immediately when the display sleeps (session-menu's Lock relies on it)"
+  sysadminctl -screenLock immediate -password -
+fi
+
+mkdir -p "$HOME/Pictures/Screenshots"
+
+# Zen's shortcuts come from the CachyOS profile, adapted by zen/macos.jq. Zen
+# has to have made its profile first, and rewrites the file if it's running.
+step "zen shortcuts"
+ZEN="$HOME/Library/Application Support/zen"
+
+zen_profile() {
+  awk -F= '/^\[Install/ { install = 1 } install && /^Default=/ { print $2; exit }' "$ZEN/profiles.ini"
+}
+
+if [[ ! -f "$ZEN/profiles.ini" ]]; then
+  warn "no Zen profile yet — open Zen once, quit it, and run this again"
+elif pgrep -xq zen; then
+  warn "Zen is running — quit it and run this again"
+else
+  profile="$ZEN/$(zen_profile)"
+  shortcuts="$profile/zen-keyboard-shortcuts.json"
+  wanted="$(jq -f "$MAC/zen/macos.jq" "$MAC/zen/zen-keyboard-shortcuts.json")"
+
+  if [[ -f "$shortcuts" ]] && [[ "$(cat "$shortcuts")" == "$wanted" ]]; then
+    info "shortcuts already installed"
+  else
+    [[ -f "$shortcuts" ]] && cp "$shortcuts" "$shortcuts.bak.$(date +%Y%m%d%H%M%S)"
+    printf '%s\n' "$wanted" >"$shortcuts"
+    info "wrote $shortcuts"
+  fi
+  link "$CONFIG/zen/user.js" "$profile/user.js"
+fi
+
+step "karabiner rules"
+"$CONFIG/scripts/karabiner-build"
+launchctl kickstart -k "gui/$(id -u)/org.pqrs.service.agent.Karabiner-Console-User-Server" 2>/dev/null ||
+  warn "Karabiner isn't running yet — it picks the rules up once its permissions are granted"
+
+step "status"
+for t in fish starship zoxide fzf carapace eza bat fd rg fastfetch \
+  lazygit lazydocker zellij yazi spf nvim gh omniwmctl ghostty choose; do
+  if have "$t"; then
+    printf '  \033[32m✓\033[0m %s\n' "$t"
+  else printf '  \033[31m✗\033[0m %s\n' "$t"; fi
+done
+
+open -a Karabiner-Elements
+open -a OmniWM
+open -a AltTab
+open -a Shottr
+
+cat <<NOTE
+
+  Permissions macOS won't let a script grant:
+  - Karabiner-Elements: allow its driver extension, Input Monitoring and
+    Accessibility, and pick the ANSI keyboard type; for Ctrl+click in Zen,
+    turn on "Modify events" for the mouse/trackpad under Devices
+  - OmniWM: Accessibility, Input Monitoring, Screen Recording (overview
+    thumbnails); Settings > General > Start at Login
+  - AltTab: Accessibility, Screen Recording; start at login
+  - Shottr: Screen Recording; launch at login; on the first save pick
+    ~/Pictures/Screenshots
+  - the first Mod+Return and session menu ask to let Karabiner control
+    Ghostty and System Events — allow both
+
+  - log out and back in
+  - import GPG keys
+  - colima start (docker)
+
+To undo the config swap:
+  rm "$CONFIG" && mv "$BACKUP" "$CONFIG"
+NOTE

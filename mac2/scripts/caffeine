@@ -1,0 +1,32 @@
+#!/usr/bin/env bash
+#
+# caffeine — toggle idle inhibit, like noctalia's caffeine-toggle. While on,
+# nothing idles the session: no display sleep, no lock, no system sleep.
+
+set -euo pipefail
+
+PIDFILE="${TMPDIR:-/tmp}/caffeine.pid"
+
+notify() { osascript -e "display notification \"$1\" with title \"Caffeine\""; }
+
+running() {
+  [[ -f "$PIDFILE" ]] && [[ "$(ps -p "$(cat "$PIDFILE")" -o comm= 2>/dev/null)" == *caffeinate ]]
+}
+
+turn_on() {
+  nohup caffeinate -dis >/dev/null 2>&1 &
+  echo $! >"$PIDFILE"
+  notify "On"
+}
+
+turn_off() {
+  kill "$(cat "$PIDFILE")"
+  rm -f "$PIDFILE"
+  notify "Off"
+}
+
+if running; then
+  turn_off
+else
+  turn_on
+fi
