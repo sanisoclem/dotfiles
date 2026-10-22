@@ -16,6 +16,10 @@ input {
         natural-scroll
     }
 
+    mouse {
+        accel-profile "flat"
+    }
+
     // Warp the pointer to the middle of whatever window takes focus.
     warp-mouse-to-focus
 

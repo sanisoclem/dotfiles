@@ -38,6 +38,7 @@ def window_manager:
     bind("Mod+Shift+S"; "Send window to scratch"; wm("move-to-workspace 10")),
     bind("Mod+Ctrl+S"; "Control centre"; press("Fn+C")),
     bind("Mod+Comma"; "System settings"; run("open -b com.apple.systempreferences")),
+    bind("Mod+M"; "App menu at the pointer"; wm("open-menu-anywhere")),
     bind("Mod+BackSpace"; "Session: lock, sleep, logout, reboot, shutdown"; script("session-menu")),
     bind("Mod+Shift+O"; "Pomodoro timer (not ported yet)"; nothing),
     bind("Mod+Ctrl+Shift+C"; "Calculator"; run("open -a Calculator")),

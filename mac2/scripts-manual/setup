@@ -304,6 +304,9 @@ cat <<NOTE
   - the first Mod+Return and session menu ask to let Karabiner control
     Ghostty and System Events — allow both
 
+  - System Settings > Menu Bar > Automatically hide and show the menu bar:
+    Always (Mod+M shows the app's menus at the pointer instead)
+
   - log out and back in
   - import GPG keys
   - colima start (docker)
