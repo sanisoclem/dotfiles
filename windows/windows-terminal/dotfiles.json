@@ -1,0 +1,49 @@
+{
+    "$help": "cachyos/ghostty/config for Windows Terminal, as a fragment: settings.json stays Windows Terminal's own, and this is read alongside it. setup.ps1 links this folder into %LOCALAPPDATA%\\Microsoft\\Windows Terminal\\Fragments\\dotfiles. Restart Windows Terminal to pick up changes.",
+    "schemes": [
+        {
+            "name": "Noctalia",
+            "background": "#0b151a",
+            "foreground": "#dae4ec",
+            "cursorColor": "#dae4ec",
+            "selectionBackground": "#364954",
+            "black": "#364954",
+            "red": "#ffb4ab",
+            "green": "#56dbc5",
+            "yellow": "#83d5c5",
+            "blue": "#8ecff2",
+            "purple": "#56dbc5",
+            "cyan": "#83d5c5",
+            "white": "#dae4ec",
+            "brightBlack": "#8094a0",
+            "brightRed": "#ffb4ab",
+            "brightGreen": "#56dbc5",
+            "brightYellow": "#83d5c5",
+            "brightBlue": "#8ecff2",
+            "brightPurple": "#56dbc5",
+            "brightCyan": "#83d5c5",
+            "brightWhite": "#dae4ec"
+        }
+    ],
+    "profiles": [
+        {
+            "name": "Arch",
+            "guid": "{9f3c6a52-5d1e-4b7a-9c2e-7a1d0b3e8f41}",
+            "commandline": "wsl.exe --distribution archlinux --cd ~",
+            "icon": "ms-appx:///ProfileIcons/{9acb9455-ca41-5af7-950f-6bca1bc9722f}.png",
+            "colorScheme": "Noctalia",
+            "font": { "face": "FiraCode Nerd Font", "size": 12 },
+            "padding": "19",
+            "cursorShape": "filledBox",
+            "intenseTextStyle": "bold",
+            "opacity": 100,
+            "useAcrylic": false,
+            "bellStyle": "none",
+            "closeOnExit": "always"
+        },
+        {
+            "updates": "{c64f7b31-3ddb-5af0-b49f-36d2a01cd575}",
+            "hidden": true
+        }
+    ]
+}

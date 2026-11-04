@@ -1,0 +1,151 @@
+#!/usr/bin/env bash
+#
+# The root half of Arch on WSL: system packages, the login user and WSL's own
+# plumbing. scripts-manual/setup.ps1 runs it, then wsl/setup as the user:
+#
+#   wsl -d archlinux -u root --cd <repo>\windows --exec bash wsl/provision <user>
+
+set -euo pipefail
+
+step() { printf '\n\033[1;34m==>\033[0m %s\n' "$*"; }
+info() { printf '  %s\n' "$*"; }
+die() {
+  printf '\033[1;31mfatal:\033[0m %s\n' "$*" >&2
+  exit 1
+}
+have() { command -v "$1" >/dev/null 2>&1; }
+
+user="${1:-}"
+[[ -n "$user" ]] || die "usage: provision <user>"
+[[ $EUID -eq 0 ]] || die "run it as root: wsl -d archlinux -u root ..."
+have pacman || die "no pacman — this script is for arch"
+
+step "windows interop"
+# WSL leaves WSLInterop to systemd-binfmt, which Arch skips while binfmt.d is
+# empty. Every distro shares the registration, so booting Arch without this
+# breaks .exe launches in all of them.
+mkdir -p /etc/binfmt.d
+printf ':WSLInterop:M::MZ::/init:P\n' >/etc/binfmt.d/WSLInterop.conf
+if [[ -d /run/systemd/system ]]; then
+  systemctl restart systemd-binfmt
+fi
+info "wrote /etc/binfmt.d/WSLInterop.conf"
+
+step "wsl.conf"
+cat >/etc/wsl.conf <<EOF
+[boot]
+systemd=true
+
+[user]
+default=$user
+EOF
+info "systemd on, $user logs in by default"
+
+step "locale"
+# WSL passes Windows' LANG through, and Arch ships with no locales generated.
+if locale -a | grep -x 'en_US.utf8' >/dev/null; then
+  info "en_US.UTF-8 already generated"
+else
+  sed -i 's/^#\(en_US.UTF-8 UTF-8\)/\1/' /etc/locale.gen
+  locale-gen
+fi
+printf 'LANG=en_US.UTF-8\n' >/etc/locale.conf
+
+step "pacman keyring"
+if [[ -s /etc/pacman.d/gnupg/trustdb.gpg ]]; then
+  info "already initialised"
+else
+  pacman-key --init
+  pacman-key --populate archlinux
+fi
+
+# The CLI half of cachyos/scripts-manual/setup. The desktop is Windows' here,
+# and Docker Desktop's WSL integration provides docker.
+PACKAGES=(
+  fish starship zoxide fzf
+  bat
+  eza
+  fd
+  ripgrep
+  dust
+  btop procs duf ncdu tree
+  jq yq
+  tealdeer
+  fastfetch atuin direnv just entr hyperfine glow
+  7zip
+  unzip unarchiver unrar
+  fortune-mod # fish_greeting
+
+  # dev
+  neovim git github-cli
+  git-delta
+  difftastic
+  gnupg pinentry
+  lazygit lazydocker zellij yazi superfile
+  tokei
+  uv python-pip nodejs npm
+  base-devel
+  cmake
+  openssl
+  sd
+  fnm rustup go
+  gdu figlet
+  tree-sitter-cli
+
+  # yazi's preview backends
+  ffmpeg
+  ffmpegthumbnailer
+  imagemagick
+  poppler chafa
+
+  # CachyOS has these out of the box; the WSL image doesn't
+  openssh man-db man-pages less wget
+  expac pkgfile # cachyos-fish-config's aliases and command-not-found
+)
+
+step "installing packages"
+pacman -Syu --needed --noconfirm "${PACKAGES[@]}"
+pkgfile --update >/dev/null
+systemctl enable --quiet pkgfile-update.timer
+
+# cachyos/fish/config.fish builds on CachyOS's own fish config, which only
+# CachyOS's repos package.
+CACHYOS_FISH_CONFIG_VERSION=16
+CACHYOS_FISH_CONFIG_SHA256=97a0b603f393be3422465ff9e18f2d03ccfc33657b672de6ba89b3a3ac3b473d
+CACHYOS_FISH_CONFIG_DIR=/usr/share/cachyos-fish-config
+
+if [[ -f "$CACHYOS_FISH_CONFIG_DIR/cachyos-config.fish" ]]; then
+  info "cachyos-fish-config already installed"
+else
+  step "cachyos-fish-config $CACHYOS_FISH_CONFIG_VERSION"
+  fish_config_tmp="$(mktemp -d)"
+  trap 'rm -rf "$fish_config_tmp"' EXIT
+
+  curl -fsSL -o "$fish_config_tmp/src.tar.gz" \
+    "https://github.com/CachyOS/cachyos-fish-config/archive/v$CACHYOS_FISH_CONFIG_VERSION.tar.gz"
+  echo "$CACHYOS_FISH_CONFIG_SHA256  $fish_config_tmp/src.tar.gz" | sha256sum --check --status ||
+    die "cachyos-fish-config checksum mismatch"
+  tar -xzf "$fish_config_tmp/src.tar.gz" -C "$fish_config_tmp" --strip-components=1
+
+  install -D -m644 "$fish_config_tmp/cachyos-config.fish" "$CACHYOS_FISH_CONFIG_DIR/cachyos-config.fish"
+  # On WSL, done.fish starts powershell.exe before every command to find the
+  # focused window, which takes over a second on this machine.
+  install -D -m644 /dev/null "$CACHYOS_FISH_CONFIG_DIR/conf.d/done.fish"
+  info "installed to $CACHYOS_FISH_CONFIG_DIR, without done.fish"
+
+  rm -rf "$fish_config_tmp"
+  trap - EXIT
+fi
+
+step "user $user"
+if id "$user" >/dev/null 2>&1; then
+  info "already exists"
+else
+  useradd --create-home "$user"
+  passwd "$user"
+fi
+usermod --append --groups wheel --shell /usr/bin/fish "$user"
+printf '%%wheel ALL=(ALL:ALL) ALL\n' >/etc/sudoers.d/wheel
+chmod 440 /etc/sudoers.d/wheel
+visudo --check --quiet
+info "in wheel, sudo works, login shell is fish"

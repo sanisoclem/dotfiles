@@ -1,0 +1,133 @@
+# LeopardWM: https://github.com/jcardama/LeopardWM
+# The niri config in cachyos/niri, translated. Mod is F13 throughout — see
+# scripts-manual/win-key-to-f13.ps1 for why it can't be the Win key.
+#
+# Binds that launch things (terminal, launcher, session menu, ...) live in
+# autohotkey/hotkeys.ahk: LeopardWM only binds its own commands.
+
+[layout]
+gap = 9
+outer_gap_left = 9
+outer_gap_right = 9
+outer_gap_top = 9
+outer_gap_bottom = 9
+centering_mode = "just_in_view"
+center_single_column = true
+width_presets = [0.33333, 0.5, 0.66667]
+default_width_preset = 2
+height_presets = [0.33333, 0.5, 0.66667]
+
+[appearance]
+active_border = true
+active_border_color = "56dbc5"
+active_border_width = 2
+
+[behavior]
+focus_follows_mouse = true
+mouse_follows_focus = true
+check_for_updates = false
+# The default hides buttons for windows scrolled out of view and on other
+# workspaces. "hide_inactive_workspaces" would keep only the scrolled-out ones.
+taskbar_buttons = "show_all"
+
+[animation]
+easing = "ease_out"
+
+[hotkeys]
+"F13+Left" = "focus_left"
+"F13+Down" = "focus_down"
+"F13+Up" = "focus_up"
+"F13+Right" = "focus_right"
+"F13+H" = "focus_left"
+"F13+J" = "focus_down"
+"F13+K" = "focus_up"
+"F13+L" = "focus_right"
+
+"F13+Shift+Left" = "move_column_left"
+"F13+Shift+Down" = "move_window_down"
+"F13+Shift+Up" = "move_window_up"
+"F13+Shift+Right" = "move_column_right"
+"F13+Shift+H" = "move_column_left"
+"F13+Shift+J" = "move_window_down"
+"F13+Shift+K" = "move_window_up"
+"F13+Shift+L" = "move_column_right"
+
+"F13+Home" = "focus_start"
+"F13+End" = "focus_end"
+"F13+Shift+Home" = "move_column_to_start"
+"F13+Shift+End" = "move_column_to_end"
+
+"F13+PageDown" = "workspace_next"
+"F13+PageUp" = "workspace_prev"
+"F13+U" = "workspace_next"
+"F13+I" = "workspace_prev"
+"F13+Ctrl+PageDown" = "move_to_workspace_next"
+"F13+Ctrl+PageUp" = "move_to_workspace_prev"
+"F13+Ctrl+U" = "move_to_workspace_next"
+"F13+Ctrl+I" = "move_to_workspace_prev"
+
+"F13+1" = "switch_workspace_1"
+"F13+2" = "switch_workspace_2"
+"F13+3" = "switch_workspace_3"
+"F13+4" = "switch_workspace_4"
+"F13+5" = "switch_workspace_5"
+"F13+6" = "switch_workspace_6"
+"F13+7" = "switch_workspace_7"
+"F13+8" = "switch_workspace_8"
+"F13+9" = "switch_workspace_9"
+"F13+Shift+1" = "move_to_workspace_1"
+"F13+Shift+2" = "move_to_workspace_2"
+"F13+Shift+3" = "move_to_workspace_3"
+"F13+Shift+4" = "move_to_workspace_4"
+"F13+Shift+5" = "move_to_workspace_5"
+"F13+Shift+6" = "move_to_workspace_6"
+"F13+Shift+7" = "move_to_workspace_7"
+"F13+Shift+8" = "move_to_workspace_8"
+"F13+Shift+9" = "move_to_workspace_9"
+
+"F13+[" = "move_window_left"
+"F13+]" = "move_window_right"
+"F13+Shift+," = "consume_from_right"
+"F13+Shift+." = "expel_to_right"
+
+"F13+R" = "cycle_width_up"
+"F13+Shift+R" = "cycle_height_up"
+"F13+Ctrl+R" = "equalize_heights"
+"F13+F" = "maximize_column"
+"F13+Shift+F" = "toggle_fullscreen"
+"F13+C" = "center_column"
+"F13+-" = "cycle_width_down"
+"F13+=" = "cycle_width_up"
+"F13+Shift+-" = "cycle_height_down"
+"F13+Shift+=" = "cycle_height_up"
+
+"F13+T" = "toggle_floating"
+"F13+V" = "toggle_tabbed"
+
+"F13+X" = "toggle_overview"
+"F13+W" = "close_window"
+
+"F13+S" = "scratchpad_toggle"
+"F13+Shift+S" = "scratchpad_stash"
+
+"F13+Escape" = "toggle_pause"
+"F13+Ctrl+Escape" = "panic_revert"
+"F13+Ctrl+Shift+R" = "reload"
+
+[[window_rules]]
+match_title = "^Picture-in-Picture$"
+action = "float"
+
+[[window_rules]]
+match_class = "^ApplicationFrameWindow$"
+match_title = "^Calculator$"
+action = "float"
+
+[[window_rules]]
+match_executable = "steam.exe"
+match_title = "^[Ss]team$"
+action = "tile"
+
+[[window_rules]]
+match_executable = "steam.exe"
+action = "float"

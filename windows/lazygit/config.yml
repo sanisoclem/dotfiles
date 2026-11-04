@@ -1,0 +1,25 @@
+# Cycle between these with | in any diff view. The first entry is the default.
+# Needs lazygit >= 0.64 (before that the key was git.pagers, and before 0.56
+# there was only a single git.paging.pager).
+git:
+  diffRenderers:
+    # type defaults to stdinFilter — the command is used as GIT_PAGER.
+    - command: delta --dark --paging=never
+      name: delta
+
+    - command: delta --dark --paging=never --side-by-side
+      name: delta side-by-side
+
+    # difftastic needs the whole diff, not git's output, so it goes through
+    # git's diff.external instead. {{diffContext}} tracks lazygit's context size.
+    - type: extDiff
+      command: difft --color=always --context={{diffContext}}
+      name: difftastic
+
+    # git's own diff, no post-processing
+    - type: rawGit
+      name: git
+
+    - type: rawGit
+      args: [--color-words]
+      name: color-words
