@@ -59,8 +59,8 @@ else
   pacman-key --populate archlinux
 fi
 
-# The CLI half of cachyos/scripts-manual/setup. The desktop is Windows' here,
-# and Docker Desktop's WSL integration provides docker.
+# The desktop is Windows' here, and Docker Desktop's WSL integration provides
+# docker.
 PACKAGES=(
   fish starship zoxide fzf
   bat
@@ -108,7 +108,7 @@ pacman -Syu --needed --noconfirm "${PACKAGES[@]}"
 pkgfile --update >/dev/null
 systemctl enable --quiet pkgfile-update.timer
 
-# cachyos/fish/config.fish builds on CachyOS's own fish config, which only
+# fish/config.fish builds on CachyOS's own fish config, which only
 # CachyOS's repos package.
 CACHYOS_FISH_CONFIG_VERSION=16
 CACHYOS_FISH_CONFIG_SHA256=97a0b603f393be3422465ff9e18f2d03ccfc33657b672de6ba89b3a3ac3b473d

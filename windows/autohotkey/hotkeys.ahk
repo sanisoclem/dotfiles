@@ -17,7 +17,7 @@ ScoopApps := (EnvGet("SCOOP") || EnvGet("USERPROFILE") "\scoop") "\apps"
 ; tab row or title bar, as ghostty has under niri. Ctrl+Shift+P, "focus mode"
 ; brings them back.
 Terminal := 'wt.exe -w new --focus -p "Arch"'
-FlowLauncher := ScoopApps "\flow-launcher\current\Flow.Launcher.exe"
+PowerToys := ScoopApps "\powertoys\current\PowerToys.exe"
 Lwm := ScoopApps "\leopardwm\current\lwm.exe"
 Caffeinated := false
 
@@ -55,15 +55,15 @@ Backspace:: SessionMenu.Show()
 F14:: OpenPomodoro()
 F15:: RefreshWallpapers()
 
-; Flow Launcher's own hotkey is Ctrl+Space. Start it first if it isn't running,
-; since the hotkey does nothing until then.
+; PowerToys Run's own hotkey is Alt+Space. Start PowerToys first if it isn't
+; running, since the hotkey does nothing until then.
 OpenLauncher() {
-    if ProcessExist("Flow.Launcher.exe")
-        Send("^{Space}")
-    else if FileExist(FlowLauncher)
-        Run(FlowLauncher)
+    if ProcessExist("PowerToys.exe")
+        Send("!{Space}")
+    else if FileExist(PowerToys)
+        Run(PowerToys)
     else
-        TrayTip("No " FlowLauncher " — run setup.ps1", "Launcher")
+        TrayTip("No " PowerToys " — run setup.ps1", "Launcher")
 }
 
 ; niri's switch-focus-between-floating-and-tiling, which LeopardWM lacks. Asks

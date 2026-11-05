@@ -1,8 +1,8 @@
 #!/usr/bin/env bash
 #
 # The user half of Arch on WSL, after wsl/provision: a clone of this repo in
-# the distro, and the cachyos shell and editor configs linked from it. Safe to
-# re-run from either the Windows clone or the WSL one.
+# the distro, and the shell and editor configs in windows/ linked from it. Safe
+# to re-run from either the Windows clone or the WSL one.
 
 set -euo pipefail
 
@@ -41,7 +41,7 @@ link() {
   fi
 }
 
-[[ -n "${WSL_DISTRO_NAME:-}" ]] || die "not in WSL — on CachyOS, run cachyos/scripts-manual/setup"
+[[ -n "${WSL_DISTRO_NAME:-}" ]] || die "not in WSL — run scripts-manual\\setup.ps1 from Windows"
 have fish || die "no fish — run wsl/provision as root first"
 
 # Configs link into a clone inside the distro: across /mnt/c, every file read
@@ -59,7 +59,7 @@ fi
 step "config links"
 mkdir -p "$CONFIG"
 for name in fish nvim lazygit zellij; do
-  link "$DOTFILES/cachyos/$name" "$CONFIG/$name" replace
+  link "$DOTFILES/windows/$name" "$CONFIG/$name" replace
 done
 
 # github ssh workaround

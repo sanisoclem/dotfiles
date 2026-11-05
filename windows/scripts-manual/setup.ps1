@@ -1,7 +1,6 @@
 #Requires -Version 7
 #
-# The cachyos setup, for Windows: the desktop here, the shell in Arch on WSL
-# (windows/wsl). Run it from a Windows-side clone of this repo:
+# The Windows setup: the desktop here, the shell in Arch on WSL (windows/wsl). Run it from a Windows-side clone of this repo:
 #
 #   pwsh -ExecutionPolicy Bypass -File .\windows\scripts-manual\setup.ps1
 
@@ -76,7 +75,7 @@ $Packages = @(
     'extras/lazygit'
     'imagemagick' # immich-wallpaper converts HEIC/RAW/webp
 
-    'extras/leopardwm', 'extras/autohotkey', 'extras/flow-launcher'
+    'extras/leopardwm', 'extras/autohotkey', 'extras/powertoys'
 )
 
 # Each font package, by one file it installs. A copy installed some other way
@@ -108,7 +107,7 @@ Step 'config links'
 Link "$Win\windows-terminal" "$env:LOCALAPPDATA\Microsoft\Windows Terminal\Fragments\dotfiles"
 Link "$Win\leopardwm" "$env:APPDATA\leopardwm\config"
 Link "$Win\lazygit" "$env:LOCALAPPDATA\lazygit"
-Link "$RepoRoot\cachyos\nvim" "$env:LOCALAPPDATA\nvim"
+Link "$Win\nvim" "$env:LOCALAPPDATA\nvim"
 
 # window manager
 
@@ -135,14 +134,27 @@ Set-Shortcut (Join-Path ([Environment]::GetFolderPath('Startup')) 'hotkeys.lnk')
 Start-Process $ahk $hotkeys
 Info 'running, and starts at login'
 
+Step 'flow launcher'
+Get-Process Flow.Launcher -ErrorAction Ignore | Stop-Process
+Remove-Item (Join-Path ([Environment]::GetFolderPath('Startup')) 'flow-launcher.lnk') -ErrorAction Ignore
+if ('flow-launcher' -in @(Invoke-Scoop list | ForEach-Object Name)) {
+    Invoke-Scoop uninstall flow-launcher
+    Info 'uninstalled from scoop'
+}
+$flowSquirrel = "$env:LOCALAPPDATA\FlowLauncher\Update.exe"
+if (Test-Path $flowSquirrel) {
+    Start-Process $flowSquirrel '--uninstall' -Wait
+    Info 'uninstalled the standalone install'
+}
+
 Step 'launcher'
-$flow = Join-Path (scoop prefix flow-launcher) 'Flow.Launcher.exe'
-if (Test-Path $flow) {
-    Set-Shortcut (Join-Path ([Environment]::GetFolderPath('Startup')) 'flow-launcher.lnk') $flow ''
-    if (-not (Get-Process Flow.Launcher -ErrorAction Ignore)) { Start-Process $flow }
+$powertoys = Join-Path (scoop prefix powertoys) 'PowerToys.exe'
+if (Test-Path $powertoys) {
+    Set-Shortcut (Join-Path ([Environment]::GetFolderPath('Startup')) 'powertoys.lnk') $powertoys ''
+    if (-not (Get-Process PowerToys -ErrorAction Ignore)) { Start-Process $powertoys }
     Info 'running, and starts at login'
 } else {
-    Warn "$flow is missing — reinstall: scoop uninstall flow-launcher; scoop install extras/flow-launcher"
+    Warn "$powertoys is missing — reinstall: scoop uninstall powertoys; scoop install extras/powertoys"
 }
 
 Step 'mod key'
@@ -230,7 +242,7 @@ foreach ($tool in 'nvim', 'gh', 'rg', 'fd', 'fzf', 'bat', 'delta', 'difft', 'jq'
 
 Write-Host @"
 
-  - Flow Launcher's hotkey has to stay Ctrl+Space: Mod+D and Mod+Space send it
+  - PowerToys Run's hotkey has to stay Alt+Space: Mod+D and Mod+Space send it
   - ~/.gitconfig is left alone: this machine commits as work
 
 To go back to komorebi:

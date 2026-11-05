@@ -4,10 +4,15 @@
 !*.md
 !autohotkey
 !autohotkey/**
+!fish
+!fish/**
+fish/fish_variables
 !lazygit
 !lazygit/config.yml
 !leopardwm
 !leopardwm/config.toml
+!nvim
+!nvim/**
 !scripts
 !scripts/**
 !scripts-manual
@@ -18,3 +23,5 @@
 !windows-terminal/**
 !wsl
 !wsl/**
+!zellij
+!zellij/**
