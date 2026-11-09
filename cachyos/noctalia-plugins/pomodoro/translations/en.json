@@ -31,6 +31,10 @@
       "description": "Play tick/tock sounds each second while a work session is running. Break timers stay silent.",
       "label": "Enable Work Timer Sound"
     },
+    "follow-work-hours": {
+      "description": "On weekdays, start the timer when work hours begin, resume it within 5 minutes whenever it is stopped during them, and reset it when they end.",
+      "label": "Follow Work Hours"
+    },
     "long-break-duration": {
       "description": "Duration of long breaks in minutes",
       "label": "Long Break Duration"
@@ -72,6 +76,14 @@
     "work-duration": {
       "description": "Duration of each work session in minutes",
       "label": "Work Duration"
+    },
+    "work-hours-end": {
+      "description": "Hour (1-24) work hours end on weekdays",
+      "label": "Work Hours End"
+    },
+    "work-hours-start": {
+      "description": "Hour (0-23) work hours begin on weekdays",
+      "label": "Work Hours Start"
     }
   },
   "short-break": "Short Break",

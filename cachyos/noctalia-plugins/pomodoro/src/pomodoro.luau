@@ -11,6 +11,9 @@ local config = (function()
         bypassNoctaliaSoundGlobals = noctalia.getConfig("bypass-noctalia-sound-globals") ~= false,
         openPanelOnExpiry = noctalia.getConfig("open-panel-on-expiry") ~= false,
         notifyOnExpiry = noctalia.getConfig("notify-on-expiry") ~= false,
+        followWorkHours = noctalia.getConfig("follow-work-hours") ~= false,
+        workHoursStart = noctalia.getConfig("work-hours-start") or 9,
+        workHoursEnd = noctalia.getConfig("work-hours-end") or 17,
     }
 end)()
 noctalia.state.set("mel-pomodoro.config", config)
@@ -44,6 +47,10 @@ local isDirty = false
 local secondsLeft = 0
 local tickAnchorSecond = nil
 local lastProcessedSecond = nil
+
+local WORK_HOURS_CHECK_INTERVAL_SECONDS = 5 * 60
+local lastWorkHoursCheckSlot = nil
+local wasWorkHours = false
 
 local function resetTickClock()
     tickAnchorSecond = nil
@@ -105,13 +112,39 @@ end)
 local state = getStateSnapshot()
 noctalia.state.set("mel-pomodoro.state", state)
 
-noctalia.setUpdateInterval(250)
-function update()
+local function reopenPendingPanel()
     if pendingPanelOpenAt ~= nil and noctalia.nowMs() >= pendingPanelOpenAt then
         pendingPanelOpenAt = nil
         noctalia.togglePanel(PANEL_ID)
     end
+end
 
+local function isWorkHours(time)
+    local date = os.date("*t", time)
+    local isWeekday = date.wday >= 2 and date.wday <= 6
+    return isWeekday and date.hour >= config.workHoursStart and date.hour < config.workHoursEnd
+end
+
+local function enforceWorkHours(isNowWorkHours)
+    if isNowWorkHours and not isRunning then
+        noctalia.state.set("mel-pomodoro.nextCommand", "toggle")
+    elseif wasWorkHours and not isNowWorkHours then
+        noctalia.state.set("mel-pomodoro.nextCommand", "resetAll")
+    end
+    wasWorkHours = isNowWorkHours
+end
+
+local function followWorkHours()
+    local now = os.time()
+    local slot = math.floor(now / WORK_HOURS_CHECK_INTERVAL_SECONDS)
+    if not config.followWorkHours or slot == lastWorkHoursCheckSlot then
+        return
+    end
+    lastWorkHoursCheckSlot = slot
+    enforceWorkHours(isWorkHours(now))
+end
+
+local function countDown()
     if not isRunning then
         return
     end
@@ -148,6 +181,13 @@ function update()
     if stateChanged then
         noctalia.state.set("mel-pomodoro.state", getStateSnapshot())
     end
+end
+
+noctalia.setUpdateInterval(250)
+function update()
+    reopenPendingPanel()
+    followWorkHours()
+    countDown()
 end
 
 --- Puts the panel on screen regardless of whether it is already open: tell it to

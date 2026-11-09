@@ -28,6 +28,14 @@ window-rule {
     opacity 0.0
 }
 
+// FL Studio runs inside a Wine virtual desktop, set in ~/.wine-fl, because its
+// windows lose clicks under xwayland-satellite and Wine's Wayland driver. The
+// desktop follows the column size; it opens as a full-width column.
+window-rule {
+    match app-id="explorer.exe" title="^FL - Wine Desktop$"
+    open-maximized true
+}
+
 // noctalia's settings window is a dialog, not a tile.
 window-rule {
     match app-id="dev.noctalia.Noctalia"
