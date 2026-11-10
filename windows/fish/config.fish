@@ -66,3 +66,4 @@ set --export PATH $BUN_INSTALL/bin $PATH
 
 # opencode
 fish_add_path /home/mel/.opencode/bin
+fish_add_path /home/mel/.dotnet/tools

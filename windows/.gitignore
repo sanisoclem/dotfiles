@@ -25,3 +25,4 @@ fish/fish_variables
 !wsl/**
 !zellij
 !zellij/**
+wsl/fish/fish_variables
