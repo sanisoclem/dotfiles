@@ -81,7 +81,7 @@ PACKAGES=(
   git-delta
   difftastic
   gnupg pinentry
-  lazygit lazydocker zellij yazi superfile
+  lazygit lazydocker zellij tmux yazi superfile
   tokei
   uv python-pip nodejs npm
   base-devel
