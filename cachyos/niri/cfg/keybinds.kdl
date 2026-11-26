@@ -8,6 +8,7 @@ binds {
 
     // ─── Applications ───
     Mod+Return { spawn "ghostty"; }
+    Mod+Ctrl+Return hotkey-overlay-title="Terminal with tmux" { spawn-sh "ghostty -e ~/.config/scripts/tmux-reattach"; }
     Mod+D hotkey-overlay-title="Run an Application: fuzzel" { spawn "fuzzel"; }
     Mod+E hotkey-overlay-title="File Manager: nautilus" { spawn "nautilus"; }
     Super+Alt+L hotkey-overlay-title="Lock the Screen: swaylock" { spawn "swaylock"; }

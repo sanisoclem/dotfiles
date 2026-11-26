@@ -1,0 +1,14 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+latest_detached_session() {
+    tmux list-sessions -f '#{==:#{session_attached},0}' -F '#{session_activity} #{session_name}' 2>/dev/null |
+        sort -rn | head -n1 | cut -d' ' -f2-
+}
+
+session=$(latest_detached_session || true)
+
+if [[ -n $session ]]; then
+    exec tmux attach-session -t "=$session"
+fi
+exec tmux new-session
