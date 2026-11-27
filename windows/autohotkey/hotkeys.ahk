@@ -17,7 +17,7 @@ ScoopApps := (EnvGet("SCOOP") || EnvGet("USERPROFILE") "\scoop") "\apps"
 ; tab row or title bar, as ghostty has under niri. Ctrl+Shift+P, "focus mode"
 ; brings them back.
 Terminal := 'wt.exe -w new --focus -p "Arch"'
-TmuxTerminal := Terminal ' wsl.exe --distribution archlinux --cd ~ --exec fish -c tmux-reattach'
+ZellijTerminal := Terminal ' wsl.exe --distribution archlinux --cd ~ --exec fish -c zellij-attach-or-create'
 PowerToys := ScoopApps "\powertoys\current\PowerToys.exe"
 Lwm := ScoopApps "\leopardwm\current\lwm.exe"
 Caffeinated := false
@@ -32,7 +32,7 @@ SessionMenu.Add("Shut down", (*) => Shutdown(1 | 8))
 #HotIf GetKeyState("F13", "P")
 
 Enter:: Run(Terminal)
-^Enter:: Run(TmuxTerminal)
+^Enter:: Run(ZellijTerminal)
 d:: OpenLauncher()
 Space:: OpenLauncher()
 e:: Run("explorer.exe")
