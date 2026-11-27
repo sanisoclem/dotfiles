@@ -1,0 +1,30 @@
+layout {
+    cwd "/home/mel/codez"
+    default_tab_template {
+        children
+        pane size=1 borderless=true {
+            plugin location="compact-bar"
+        }
+    }
+    tab name="engine" cwd="Engine" focus=true {
+        pane command="nvim"
+    }
+    tab name="nexus" cwd="Nexus" {
+        pane command="nvim"
+    }
+    tab name="campaigns" cwd="CreditClear.Campaigns" {
+        pane command="nvim"
+    }
+    tab name="claim" cwd="Claim" {
+        pane command="nvim"
+    }
+    tab name="data egress" cwd="IntegrationDataEgress" {
+        pane command="nvim"
+    }
+    tab name="integration service" cwd="IntegrationService" {
+        pane command="nvim"
+    }
+    tab name="client portal" cwd="ClientManagementPortal" {
+        pane command="nvim"
+    }
+}

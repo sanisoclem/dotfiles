@@ -100,6 +100,8 @@ keybinds clear-defaults=true {
         bind "w" { SearchToggleOption "Wrap"; }
     }
     session {
+        bind "A" { SwitchSession { name "apps"; layout "apps"; }; SwitchToMode "locked"; }
+        bind "G" { SwitchSession { name "gitops"; layout "gitops"; }; SwitchToMode "locked"; }
         bind "a" {
             LaunchOrFocusPlugin "zellij:about" {
                 floating true
@@ -261,7 +263,21 @@ keybinds clear-defaults=true {
 // changing these requires a restart to take effect
 plugins {
     about location="zellij:about"
-    compact-bar location="zellij:compact-bar"
+    compact-bar location="https://github.com/dj95/zjstatus/releases/download/v0.25.0/zjstatus.wasm" {
+        format_left "{mode}#[bg=#1d2021,fg=#b8bb26,bold] {session} "
+        format_center "{tabs}"
+        format_right ""
+        format_space "#[bg=#1d2021]"
+
+        mode_normal "#[bg=#b8bb26,fg=#1d2021,bold] {name} "
+        mode_locked "#[bg=#504945,fg=#ebdbb2,bold] {name} "
+        mode_tmux "#[bg=#fe8019,fg=#1d2021,bold] {name} "
+        mode_default_to_mode "normal"
+
+        tab_normal "#[bg=#3c3836,fg=#a89984] {index} {name} "
+        tab_active "#[bg=#b8bb26,fg=#1d2021,bold] {index} {name} "
+        tab_separator "#[bg=#1d2021] "
+    }
     configuration location="zellij:configuration"
     filepicker location="zellij:strider" {
         cwd "/"
@@ -304,6 +320,7 @@ web_client {
 // Default: default
 // 
 // theme "dracula"
+theme "gruvbox-dark-hard"
  
 // Theme to use when the host terminal reports a dark color palette.
 // Requires `theme_light` to also be set; otherwise `theme` is used.
@@ -338,7 +355,7 @@ default_mode "locked"
 // The name of the default layout to load on startup
 // Default: "default"
 // 
-// default_layout "compact"
+default_layout "compact"
  
 // The folder in which Zellij will look for layouts
 // (Requires restart)
@@ -364,7 +381,7 @@ default_mode "locked"
 //   - true (default, enabled)
 //   - false
 // 
-// pane_frames false
+pane_frames false
  
 // Set the pane frame style when pane_frames is enabled
 // Options:
