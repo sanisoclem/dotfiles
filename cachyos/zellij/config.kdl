@@ -100,6 +100,9 @@ keybinds clear-defaults=true {
         bind "w" { SearchToggleOption "Wrap"; }
     }
     session {
+        bind "H" { SwitchSession { name "hempire"; layout "hempire"; }; SwitchToMode "locked"; }
+        bind "S" { SwitchSession { name "saline"; layout "saline"; }; SwitchToMode "locked"; }
+        bind "V" { SwitchSession { name "vibe-ceo"; layout "vibe-ceo"; }; SwitchToMode "locked"; }
         bind "a" {
             LaunchOrFocusPlugin "zellij:about" {
                 floating true
@@ -261,7 +264,24 @@ keybinds clear-defaults=true {
 // changing these requires a restart to take effect
 plugins {
     about location="zellij:about"
-    compact-bar location="zellij:compact-bar"
+    compact-bar location="https://github.com/dj95/zjstatus/releases/download/v0.25.0/zjstatus.wasm" {
+        format_left "{mode}#[fg=green,bold] {session} {tabs}"
+        format_center ""
+        format_right ""
+        format_space ""
+
+        mode_normal "#[bg=green,fg=black,bold] {name} "
+        mode_locked "#[bg=black,fg=white,bold] {name} "
+        mode_tmux "#[bg=red,fg=black,bold] {name} "
+        mode_default_to_mode "normal"
+
+        tab_normal "#[bg=black,fg=white] {index} {name} "
+        tab_active "#[bg=green,fg=black,bold] {index} {name} "
+        tab_separator " "
+        tab_display_count "5"
+        tab_truncate_start_format "#[fg=red] ← +{count} "
+        tab_truncate_end_format "#[fg=red] +{count} → "
+    }
     configuration location="zellij:configuration"
     filepicker location="zellij:strider" {
         cwd "/"

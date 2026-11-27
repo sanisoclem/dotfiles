@@ -1,0 +1,4 @@
+[theme.templates.user.zellij]
+input_path = "templates/zellij.kdl"
+output_path = "~/.config/zellij/themes/noctalia.kdl"
+post_hook = "touch ~/.config/zellij/config.kdl"

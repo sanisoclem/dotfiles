@@ -1,0 +1,46 @@
+#!/usr/bin/env bash
+set -euo pipefail
+shopt -s nullglob
+
+layout_dir=${XDG_CONFIG_HOME:-$HOME/.config}/zellij/layouts
+
+ensure_session() {
+    local name=$1 layout=$layout_dir/$1.kdl
+    if [[ ! -f $layout ]]; then
+        echo "no zellij layout named $name in $layout_dir" >&2
+        return 1
+    fi
+    if listed "$name" "$(live_session_names)"; then
+        return
+    fi
+    if listed "$name" "$(exited_session_names)"; then
+        zellij delete-session "$name"
+    fi
+    zellij attach --create-background "$name" options --default-layout "$layout"
+}
+
+live_session_names() {
+    zellij list-sessions --no-formatting 2>/dev/null | grep -v 'EXITED' | sed 's/ \[Created .*//' || true
+}
+
+exited_session_names() {
+    zellij list-sessions --no-formatting 2>/dev/null | grep 'EXITED' | sed 's/ \[Created .*//' || true
+}
+
+listed() {
+    grep -qxF -- "$1" <<<"$2"
+}
+
+layout_names() {
+    for layout in "$layout_dir"/*.kdl; do
+        basename "$layout" .kdl
+    done
+}
+
+names=("$@")
+if ((${#names[@]} == 0)); then
+    mapfile -t names < <(layout_names)
+fi
+for name in "${names[@]}"; do
+    ensure_session "$name"
+done

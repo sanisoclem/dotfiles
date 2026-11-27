@@ -2,3 +2,4 @@
 // https://yalter.github.io/niri/Configuration:-Miscellaneous
 
 spawn-at-startup "noctalia"
+spawn-sh-at-startup "~/.config/scripts/zellij-layout-sessions"
