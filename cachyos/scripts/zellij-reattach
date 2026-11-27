@@ -1,0 +1,63 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+session_index=${XDG_CACHE_HOME:-$HOME/.cache}/zellij/contract_version_1/session_index.sqlite
+socket_dir=${XDG_RUNTIME_DIR:-/run/user/$UID}/zellij/
+ssh_connection=${SSH_CONNECTION:-}
+ssh_client=${ssh_connection%% *}
+
+most_recent_free_session() {
+    local live busy
+    live=$(live_session_names)
+    busy=$(busy_session_ids)
+    sessions_by_recent_use | while read -r id name; do
+        if listed "$name" "$live" && ! listed "$id" "$busy"; then
+            echo "$name"
+            break
+        fi
+    done
+}
+
+live_session_names() {
+    zellij list-sessions --no-formatting 2>/dev/null | grep -v 'EXITED' | sed 's/ \[Created .*//' || true
+}
+
+busy_session_ids() {
+    session_client_pids | while read -r id pid; do
+        if keeps_us_out "$pid"; then
+            echo "$id"
+        fi
+    done
+}
+
+sessions_by_recent_use() {
+    sqlite3 -readonly -separator ' ' "$session_index" \
+        "select coalesce(nullif(id, ''), name), name from sessions order by last_used_at desc" 2>/dev/null || true
+}
+
+session_client_pids() {
+    ss -xpH | awk -v sockets="$socket_dir" '
+        $2 != "ESTAB" { next }
+        match($9, /pid=[0-9]+/) { owner[$6] = substr($9, RSTART + 4, RLENGTH - 4) }
+        index($5, sockets) == 1 { id = $5; sub(/.*\//, "", id); session[$8] = id }
+        END { for (client in session) if (client in owner) print session[client], owner[client] }'
+}
+
+keeps_us_out() {
+    [[ -z $ssh_client || $(ssh_client_address "$1") == "$ssh_client" ]]
+}
+
+ssh_client_address() {
+    tr '\0' '\n' 2>/dev/null <"/proc/$1/environ" | sed -n 's/^SSH_CONNECTION=\([^ ]*\) .*/\1/p'
+}
+
+listed() {
+    grep -qxF -- "$1" <<<"$2"
+}
+
+session=$(most_recent_free_session || true)
+
+if [[ -n $session ]]; then
+    exec zellij attach "$session"
+fi
+exec zellij

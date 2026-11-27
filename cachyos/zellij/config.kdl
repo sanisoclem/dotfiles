@@ -338,8 +338,8 @@ default_mode "locked"
  
 // The name of the default layout to load on startup
 // Default: "default"
-// 
-// default_layout "compact"
+//
+default_layout "compact"
  
 // The folder in which Zellij will look for layouts
 // (Requires restart)
@@ -364,8 +364,8 @@ default_mode "locked"
 // Options:
 //   - true (default, enabled)
 //   - false
-// 
-// pane_frames false
+//
+pane_frames false
  
 // Set the pane frame style when pane_frames is enabled
 // Options:
@@ -409,8 +409,8 @@ default_mode "locked"
 // copy_command "xclip -selection clipboard" // x11
 // copy_command "wl-copy"                    // wayland
 // copy_command "pbcopy"                     // osx
-// 
-// copy_command "pbcopy"
+//
+copy_command "wl-copy"
  
 // Choose the destination for copied text
 // Allows using the primary selection buffer (on x11/wayland) instead of the system clipboard.

@@ -1,0 +1,31 @@
+layout {
+    cwd "/home/mel/code"
+
+    default_tab_template {
+        children
+        pane size=1 borderless=true {
+            plugin location="zellij:compact-bar"
+        }
+    }
+
+    tab name="hempire-rust" cwd="hempire-rust" focus=true {
+        pane command="fish" {
+            args "-C" "nvim"
+        }
+    }
+    tab name="hempire-cloud" cwd="hempire-cloud" {
+        pane command="fish" {
+            args "-C" "nvim"
+        }
+    }
+    tab name="saline-gitops" cwd="saline-gitops" {
+        pane command="fish" {
+            args "-C" "nvim"
+        }
+    }
+    tab name="hempire" cwd="hempire" {
+        pane command="fish" {
+            args "-C" "nvim"
+        }
+    }
+}
