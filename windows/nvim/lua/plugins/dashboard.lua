@@ -1,4 +1,5 @@
-local max_length = 10
+local max_length = 12
+local font = vim.fn.stdpath("config") .. "/figlet/ansi-shadow.flf"
 
 local function opened_directory()
   local path = vim.fn.argv(0)
@@ -33,6 +34,9 @@ local function abbreviate(name)
     return last_segment
   end
   local segment_words = words(last_segment)
+  if #segment_words == 1 then
+    return last_segment:sub(1, max_length)
+  end
   local short = initials(vim.list_slice(segment_words, 1, #segment_words - 1)) .. segment_words[#segment_words]
   if #short <= max_length then
     return short
@@ -44,7 +48,7 @@ local function ascii_art(text)
   if vim.fn.executable("figlet") == 0 then
     return text
   end
-  return (vim.fn.system({ "figlet", "-f", "slant", "-w", "200", text }):gsub("%s+$", ""))
+  return (vim.fn.system({ "figlet", "-f", font, "-w", "200", text }):gsub("%s+$", ""))
 end
 
 return {

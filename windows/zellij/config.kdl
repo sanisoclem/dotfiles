@@ -264,8 +264,8 @@ keybinds clear-defaults=true {
 plugins {
     about location="zellij:about"
     compact-bar location="https://github.com/dj95/zjstatus/releases/download/v0.25.0/zjstatus.wasm" {
-        format_left "{mode}#[bg=#1d2021,fg=#b8bb26,bold] {session} "
-        format_center "{tabs}"
+        format_left "{mode}#[bg=#1d2021,fg=#b8bb26,bold] {session} {tabs}"
+        format_center ""
         format_right ""
         format_space "#[bg=#1d2021]"
 
@@ -277,6 +277,9 @@ plugins {
         tab_normal "#[bg=#3c3836,fg=#a89984] {index} {name} "
         tab_active "#[bg=#b8bb26,fg=#1d2021,bold] {index} {name} "
         tab_separator "#[bg=#1d2021] "
+        tab_display_count "5"
+        tab_truncate_start_format "#[bg=#1d2021,fg=#fe8019] ← +{count} "
+        tab_truncate_end_format "#[bg=#1d2021,fg=#fe8019] +{count} → "
     }
     configuration location="zellij:configuration"
     filepicker location="zellij:strider" {

@@ -27,4 +27,16 @@ layout {
     tab name="client portal" cwd="ClientManagementPortal" {
         pane command="nvim"
     }
+    tab name="payment api" cwd="PaymentPortalApi" {
+        pane command="nvim"
+    }
+    tab name="creditor api" cwd="CreditorPortalApi" {
+        pane command="nvim"
+    }
+    tab name="experiments" cwd="CreditClear.Experiments" {
+        pane command="nvim"
+    }
+    tab name="iag" cwd="CreditClear.Integration.IAG" {
+        pane command="nvim"
+    }
 }
